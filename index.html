@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>사동 Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg0: #060811;
+  --bg1: #0d1117;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-hover: rgba(255,255,255,0.07);
+  --ink: #e8eaf0;
+  --ink-dim: rgba(232,234,240,0.45);
+  --ink-faint: rgba(232,234,240,0.2);
+  --accent: #7c6aff;       /* purple glow */
+  --accent-glow: rgba(124,106,255,0.35);
+  --cyan: #00d4ff;
+  --cyan-glow: rgba(0,212,255,0.3);
+  --green: #00e5a0;
+  --green-glow: rgba(0,229,160,0.3);
+  --red: #ff4f6e;
+  --red-glow: rgba(255,79,110,0.3);
+  --muted: rgba(232,234,240,0.4);
+  --radius: 14px;
+}
+
+body {
+  background: var(--bg0); color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
+  overflow-x: hidden; user-select: none;
+}
+
+/* animated mesh background */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(124,106,255,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 80%, rgba(0,212,255,0.09) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 60% 40%, rgba(0,229,160,0.05) 0%, transparent 70%);
+}
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ── NAV ── */
+.nav {
+  display: flex; width: 100%; max-width: 480px;
+  padding: 20px 20px 0; position: relative; z-index: 10; flex-shrink: 0; gap: 8px;
+}
+.nav-btn {
+  flex: 1; font-family: 'Space Mono', monospace; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase; padding: 11px 8px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: var(--ink-dim); cursor: pointer; border-radius: 10px;
+  transition: all 0.25s ease;
+}
+.nav-btn:hover { background: var(--glass-hover); color: var(--ink); border-color: rgba(255,255,255,0.14); }
+.nav-btn.active {
+  background: linear-gradient(135deg, rgba(124,106,255,0.25), rgba(0,212,255,0.15));
+  border-color: rgba(124,106,255,0.5);
+  color: var(--ink);
+  box-shadow: 0 0 20px rgba(124,106,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* ── PAGES ── */
+.page { display: none; flex-direction: column; align-items: center; width: 100%; flex: 1; }
+.page.active { display: flex; }
+
+/* ── SHARED HEADER ── */
+.pg-header {
+  width: 100%; max-width: 480px; padding: 16px 20px 0;
+  position: relative; z-index: 1; flex-shrink: 0;
+}
+.pg-header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.pg-label {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.28em;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 4px;
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+h2 { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 300; color: var(--ink); letter-spacing: -0.02em; }
+h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0 0 20px var(--cyan-glow); }
+
+.reset-btn {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  color: var(--ink-dim); background: var(--glass); border: 1px solid var(--glass-border);
+  padding: 6px 12px; cursor: pointer; border-radius: 8px; transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+.reset-btn:hover { color: var(--ink); border-color: rgba(255,255,255,0.18); background: var(--glass-hover); }
+
+.stats {
+  display: flex; gap: 0; margin-top: 14px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.stat { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.stat-num { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 300; line-height: 1; }
+.stat-num.green { color: var(--green); text-shadow: 0 0 16px var(--green-glow); }
+.stat-num.red   { color: var(--red);   text-shadow: 0 0 16px var(--red-glow); }
+.stat-num.muted { color: var(--ink-faint); }
+.stat-label { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.15em; color: var(--ink-faint); text-transform: uppercase; }
+
+.queue-bar { margin-top: 8px; font-family: 'Space Mono', monospace; font-size: 9px; color: var(--ink-dim); letter-spacing: 0.06em; min-height: 13px; }
+.queue-bar.warn { color: var(--red); text-shadow: 0 0 8px var(--red-glow); }
+.queue-bar.ok   { color: var(--green); text-shadow: 0 0 8px var(--green-glow); }
+
+/* ── SHARED HIGHLIGHT ── */
+.sfx { color: var(--cyan); text-shadow: 0 0 14px var(--cyan-glow); }
+
+/* ════════════════════════════════
+   SWIPE PAGE
+════════════════════════════════ */
+.stage {
+  flex: 1; width: 100%; max-width: 480px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1; padding: 12px 20px; min-height: 220px;
+}
+.card-wrap {
+  position: absolute; width: calc(100% - 40px); max-width: 400px;
+  perspective: 1000px; touch-action: none;
+}
+.flipper {
+  position: relative; width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+  min-height: 250px; cursor: pointer;
+}
+.flipper.is-flipped { transform: rotateY(180deg); }
+
+.face {
+  position: absolute; width: 100%; min-height: 250px;
+  background: rgba(13,17,23,0.7);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 28px 24px 24px;
+  display: flex; flex-direction: column; justify-content: center;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+/* subtle top glow line on card */
+.face::before {
+  content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124,106,255,0.6), transparent);
+  border-radius: 50%;
+}
+.face-back { transform: rotateY(180deg); }
+.face-spacer { min-height: 250px; }
+
+.front-label {
+  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.25em;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 14px;
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+.front-en {
+  font-family: 'Inter', sans-serif; font-size: 26px; font-weight: 300;
+  color: var(--ink); line-height: 1.25; margin-bottom: 8px; letter-spacing: -0.01em;
+}
+.front-phrase { font-size: 13px; color: var(--ink-dim); font-style: italic; line-height: 1.5; }
+.tap-hint {
+  margin-top: 22px; font-family: 'Space Mono', monospace; font-size: 8px;
+  letter-spacing: 0.18em; color: var(--ink-faint); text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+.tap-hint::before { content: ''; display: block; width: 20px; height: 1px; background: var(--glass-border); }
+
+.suffix-badge {
+  position: absolute; top: 14px; right: 16px;
+  font-family: 'Space Mono', monospace; font-size: 9px;
+  color: var(--accent); letter-spacing: 0.1em;
+  background: rgba(124,106,255,0.12); padding: 3px 8px; border-radius: 20px;
+  border: 1px solid rgba(124,106,255,0.25);
+}
+.base-line { font-size: 12px; color: var(--ink-dim); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.base-word { color: var(--ink); font-weight: 400; }
+.arr { color: var(--ink-faint); font-size: 10px; }
+.sadong-word {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 36px; font-weight: 600; letter-spacing: -0.01em; line-height: 1; margin: 6px 0 16px;
+  color: var(--ink);
+}
+.div-line { width: 28px; height: 1px; background: var(--glass-border); margin-bottom: 12px; }
+.phrase-ko { font-family: 'Noto Serif KR', serif; font-size: 14px; color: var(--ink); font-weight: 400; margin-bottom: 4px; }
+.phrase-en-sm { font-size: 11px; color: var(--ink-dim); font-style: italic; }
+
+.swipe-lbl {
+  position: absolute; top: 18px; font-family: 'Space Mono', monospace;
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  opacity: 0; padding: 5px 10px; border-radius: 6px; border: 1.5px solid;
+  pointer-events: none; z-index: 10; font-weight: 700;
+}
+.swipe-lbl.left  { left: 12px;  color: var(--red);   border-color: var(--red);   text-shadow: 0 0 10px var(--red-glow);   box-shadow: 0 0 12px var(--red-glow); }
+.swipe-lbl.right { right: 12px; color: var(--green);  border-color: var(--green); text-shadow: 0 0 10px var(--green-glow); box-shadow: 0 0 12px var(--green-glow); }
+
+.btn-row {
+  display: flex; gap: 10px; padding: 0 20px 20px;
+  width: 100%; max-width: 480px; z-index: 1; flex-shrink: 0;
+}
+.ctrl-btn {
+  flex: 1; padding: 13px; border-radius: 12px; border: 1px solid;
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  cursor: pointer; transition: all 0.2s; backdrop-filter: blur(8px);
+  text-transform: uppercase;
+}
+.ctrl-btn.again {
+  border-color: rgba(255,79,110,0.3); color: var(--red);
+  background: rgba(255,79,110,0.06);
+}
+.ctrl-btn.again:hover {
+  background: rgba(255,79,110,0.18); border-color: var(--red);
+  box-shadow: 0 0 20px var(--red-glow);
+}
+.ctrl-btn.know {
+  border-color: rgba(0,229,160,0.3); color: var(--green);
+  background: rgba(0,229,160,0.06);
+}
+.ctrl-btn.know:hover {
+  background: rgba(0,229,160,0.18); border-color: var(--green);
+  box-shadow: 0 0 20px var(--green-glow);
+}
+
+.done-banner {
+  display: none; flex-direction: column; align-items: center;
+  gap: 12px; padding: 32px 24px; text-align: center; z-index: 1;
+}
+.done-banner.show { display: flex; }
+.done-emoji { font-size: 44px; }
+.done-ht { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 300; }
+.done-ht em { font-style: normal; font-weight: 500; color: var(--green); text-shadow: 0 0 20px var(--green-glow); }
+.done-sub { font-size: 12px; color: var(--ink-dim); max-width: 260px; line-height: 1.7; }
+.done-restart {
+  margin-top: 4px; font-family: 'Space Mono', monospace; font-size: 9px;
+  letter-spacing: 0.12em; padding: 10px 22px;
+  border: 1px solid rgba(124,106,255,0.4);
+  background: rgba(124,106,255,0.1); color: var(--ink); cursor: pointer;
+  border-radius: 10px; transition: all 0.2s; text-transform: uppercase;
+}
+.done-restart:hover { background: rgba(124,106,255,0.22); box-shadow: 0 0 20px var(--accent-glow); }
+
+/* ════════════════════════════════
+   TYPE PAGE
+════════════════════════════════ */
+.type-inner {
+  width: 100%; max-width: 480px; padding: 16px 20px 32px;
+  position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1;
+}
+.type-card {
+  background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 14px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  position: relative; overflow: hidden;
+}
+.type-card::before {
+  content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.5), transparent);
+}
+.type-prompt-lbl {
+  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+.type-base-en {
+  font-family: 'Inter', sans-serif; font-size: 26px; font-weight: 300;
+  color: var(--ink); margin-bottom: 6px; letter-spacing: -0.01em;
+}
+.type-phrase-en { font-size: 13px; color: var(--ink-dim); font-style: italic; }
+
+.type-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.type-input {
+  flex: 1; font-family: 'Noto Serif KR', serif; font-size: 22px;
+  padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.04); color: var(--ink); outline: none;
+  transition: all 0.2s; user-select: text; -webkit-user-select: text;
+  backdrop-filter: blur(8px);
+}
+.type-input::placeholder { color: var(--ink-faint); font-size: 16px; }
+.type-input:focus {
+  border-color: rgba(124,106,255,0.5);
+  box-shadow: 0 0 0 3px rgba(124,106,255,0.1);
+  background: rgba(124,106,255,0.05);
+}
+.type-input.correct {
+  border-color: rgba(0,229,160,0.6);
+  box-shadow: 0 0 0 3px rgba(0,229,160,0.1), 0 0 20px rgba(0,229,160,0.1);
+  background: rgba(0,229,160,0.05);
+}
+.type-input.wrong {
+  border-color: rgba(255,79,110,0.6);
+  box-shadow: 0 0 0 3px rgba(255,79,110,0.1), 0 0 20px rgba(255,79,110,0.1);
+  background: rgba(255,79,110,0.05);
+}
+.type-submit {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  padding: 12px 16px; border-radius: 10px;
+  border: 1px solid rgba(124,106,255,0.4);
+  background: rgba(124,106,255,0.12); color: var(--ink);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; text-transform: uppercase;
+}
+.type-submit:hover { background: rgba(124,106,255,0.25); box-shadow: 0 0 16px var(--accent-glow); }
+
+.type-feedback { min-height: 56px; margin-bottom: 8px; }
+.fb-correct { display: flex; align-items: center; gap: 10px; }
+.fb-correct-icon { font-size: 18px; }
+.fb-correct-text {
+  font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+  color: var(--green); text-transform: uppercase; text-shadow: 0 0 10px var(--green-glow);
+}
+.fb-wrong-lbl {
+  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--red); margin-bottom: 5px;
+  text-shadow: 0 0 8px var(--red-glow);
+}
+.fb-answer { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 600; color: var(--ink); }
+.fb-phrase { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+
+.streak-dots { display: flex; gap: 8px; margin-bottom: 14px; }
+.sdot {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1px solid var(--glass-border); background: transparent; transition: all 0.35s;
+}
+.sdot.on {
+  background: var(--green); border-color: var(--green);
+  box-shadow: 0 0 10px var(--green-glow);
+}
+
+.type-next {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  padding: 13px; border-radius: 10px;
+  border: 1px solid rgba(124,106,255,0.35);
+  background: rgba(124,106,255,0.08); color: var(--ink);
+  cursor: pointer; transition: all 0.2s; display: none; width: 100%; text-transform: uppercase;
+}
+.type-next:hover { background: rgba(124,106,255,0.2); box-shadow: 0 0 16px var(--accent-glow); }
+
+.type-done {
+  display: none; flex-direction: column; align-items: center;
+  gap: 14px; padding: 40px 0; text-align: center;
+}
+.type-done.show { display: flex; }
+.type-done-emoji { font-size: 48px; }
+.type-done-title { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 300; }
+.type-done-title em { font-style: normal; font-weight: 500; color: var(--green); text-shadow: 0 0 20px var(--green-glow); }
+.type-done-sub { font-size: 12px; color: var(--ink-dim); max-width: 260px; line-height: 1.7; }
+.type-done-restart {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  padding: 10px 22px; border: 1px solid rgba(124,106,255,0.4);
+  background: rgba(124,106,255,0.1); color: var(--ink);
+  cursor: pointer; border-radius: 10px; transition: all 0.2s; text-transform: uppercase;
+}
+.type-done-restart:hover { background: rgba(124,106,255,0.22); box-shadow: 0 0 20px var(--accent-glow); }
+
+@media (max-width: 400px) {
+  .sadong-word { font-size: 28px; } .front-en { font-size: 20px; }
+  .type-base-en { font-size: 20px; } .type-input { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-btn active" id="navSwipe" onclick="showPage('swipe')">🃏 Swipe</button>
+  <button class="nav-btn"        id="navType"  onclick="showPage('type')">⌨️ Type</button>
+</div>
+
+<!-- ══════════════ SWIPE PAGE ══════════════ -->
+<div class="page active" id="pageSwipe">
+  <div class="pg-header">
+    <div class="pg-header-top">
+      <div><div class="pg-label">사동 · Swipe</div><h2>Swipe <em>mode</em></h2></div>
+      <button class="reset-btn" onclick="swipeReset()">↺ Reset</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-num muted">27</span><span class="stat-label">Total</span></div>
+      <div class="stat"><span class="stat-num green" id="s-known">0</span><span class="stat-label">Know ✓</span></div>
+      <div class="stat"><span class="stat-num red"   id="s-review">0</span><span class="stat-label">Review</span></div>
+      <div class="stat"><span class="stat-num muted" id="s-left">0</span><span class="stat-label">New</span></div>
+    </div>
+    <div class="queue-bar" id="s-qbar"></div>
+  </div>
+
+  <div class="stage" id="s-stage"></div>
+  <div class="done-banner" id="s-done">
+    <div class="done-emoji">✅</div>
+    <div class="done-ht">Deck <em>complete!</em></div>
+    <div class="done-sub">All 27 words swiped. Reset to go again.</div>
+    <button class="done-restart" onclick="swipeReset()">Reset deck</button>
+  </div>
+
+  <div class="btn-row">
+    <button class="ctrl-btn again" onclick="swipeOut('left')">← Review again</button>
+    <button class="ctrl-btn know"  onclick="swipeOut('right')">Got it →</button>
+  </div>
+</div>
+
+<!-- ══════════════ TYPE PAGE ══════════════ -->
+<div class="page" id="pageType">
+  <div class="pg-header">
+    <div class="pg-header-top">
+      <div><div class="pg-label">사동 · Type</div><h2>Type <em>mode</em></h2></div>
+      <button class="reset-btn" onclick="typeReset()">↺ Reset</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-num muted">27</span><span class="stat-label">Total</span></div>
+      <div class="stat"><span class="stat-num green" id="t-known">0</span><span class="stat-label">Learned</span></div>
+      <div class="stat"><span class="stat-num red"   id="t-review">0</span><span class="stat-label">Review</span></div>
+      <div class="stat"><span class="stat-num muted" id="t-left">0</span><span class="stat-label">New</span></div>
+    </div>
+    <div class="queue-bar" id="t-qbar"></div>
+  </div>
+
+  <div class="type-inner">
+    <div id="t-content">
+      <div class="streak-dots" id="t-dots"></div>
+      <div class="type-card">
+        <div class="type-prompt-lbl">Type the 사동 form</div>
+        <div class="type-base-en"  id="t-base-en">—</div>
+        <div class="type-phrase-en" id="t-phrase-en">—</div>
+      </div>
+      <div class="type-input-row">
+        <input class="type-input" id="t-input" type="text" placeholder="e.g. 먹이다" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <button class="type-submit" id="t-submit" onclick="typeCheck()">Check</button>
+      </div>
+      <div class="type-feedback" id="t-feedback"></div>
+      <button class="type-next" id="t-next" onclick="typeNext()">Next →</button>
+    </div>
+    <div class="type-done" id="t-done">
+      <div class="type-done-emoji">🎉</div>
+      <div class="type-done-title">All <em>learned!</em></div>
+      <div class="type-done-sub">You typed every word correctly twice in a row. Great work!</div>
+      <button class="type-done-restart" onclick="typeReset()">Practice again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────
+const WORDS = [
+  { base:'끓다', sadong:'끓이다', suffix:'이', phraseKo:'물을 끓이다', phraseEn:'to boil water', baseEn:'to boil (intrans.)' },
+  { base:'녹다', sadong:'녹이다', suffix:'이', phraseKo:'버터를 녹이다', phraseEn:'to melt butter', baseEn:'to melt (intrans.)' },
+  { base:'먹다', sadong:'먹이다', suffix:'이', phraseKo:'아이에게 밥을 먹이다', phraseEn:'to feed a child', baseEn:'to eat' },
+  { base:'붙다', sadong:'붙이다', suffix:'이', phraseKo:'벽에 포스터를 붙이다', phraseEn:'to stick a poster on the wall', baseEn:'to stick / cling' },
+  { base:'속다', sadong:'속이다', suffix:'이', phraseKo:'사람을 속이다', phraseEn:'to deceive someone', baseEn:'to be deceived' },
+  { base:'죽다', sadong:'죽이다', suffix:'이', phraseKo:'모기를 죽이다', phraseEn:'to kill a mosquito', baseEn:'to die' },
+  { base:'눕다', sadong:'눕히다', suffix:'히', phraseKo:'환자를 눕히다', phraseEn:'to lay a patient down', baseEn:'to lie down' },
+  { base:'앉다', sadong:'앉히다', suffix:'히', phraseKo:'손님을 앉히다', phraseEn:'to seat a guest', baseEn:'to sit' },
+  { base:'읽다', sadong:'읽히다', suffix:'히', phraseKo:'학생에게 책을 읽히다', phraseEn:'to have a student read', baseEn:'to read' },
+  { base:'입다', sadong:'입히다', suffix:'히', phraseKo:'아이에게 옷을 입히다', phraseEn:'to dress a child', baseEn:'to wear / put on' },
+  { base:'살다', sadong:'살리다', suffix:'리', phraseKo:'사람을 살리다', phraseEn:"to save someone's life", baseEn:'to live' },
+  { base:'알다', sadong:'알리다', suffix:'리', phraseKo:'소식을 알리다', phraseEn:'to announce news', baseEn:'to know' },
+  { base:'울다', sadong:'울리다', suffix:'리', phraseKo:'아이를 울리다', phraseEn:'to make a child cry', baseEn:'to cry' },
+  { base:'남다', sadong:'남기다', suffix:'기', phraseKo:'음식을 남기다', phraseEn:'to leave food uneaten', baseEn:'to remain' },
+  { base:'맡다', sadong:'맡기다', suffix:'기', phraseKo:'아이를 맡기다', phraseEn:'to entrust a child to someone', baseEn:'to take charge of' },
+  { base:'숨다', sadong:'숨기다', suffix:'기', phraseKo:'비밀을 숨기다', phraseEn:'to hide a secret', baseEn:'to hide (intrans.)' },
+  { base:'신다', sadong:'신기다', suffix:'기', phraseKo:'아이에게 신발을 신기다', phraseEn:'to put shoes on a child', baseEn:'to put on footwear' },
+  { base:'씻다', sadong:'씻기다', suffix:'기', phraseKo:'아이를 씻기다', phraseEn:'to wash a child', baseEn:'to wash (oneself)' },
+  { base:'웃다', sadong:'웃기다', suffix:'기', phraseKo:'친구를 웃기다', phraseEn:'to make a friend laugh', baseEn:'to laugh' },
+  { base:'깨다', sadong:'깨우다', suffix:'우', phraseKo:'친구를 깨우다', phraseEn:'to wake a friend up', baseEn:'to wake up' },
+  { base:'서다', sadong:'세우다', suffix:'우', phraseKo:'차를 세우다', phraseEn:'to stop a car', baseEn:'to stand / stop' },
+  { base:'자다', sadong:'재우다', suffix:'우', phraseKo:'아이를 재우다', phraseEn:'to put a child to sleep', baseEn:'to sleep' },
+  { base:'타다', sadong:'태우다', suffix:'우', phraseKo:'손님을 태우다', phraseEn:'to give a passenger a ride', baseEn:'to ride / board' },
+  { base:'차다', sadong:'채우다', suffix:'우', phraseKo:'빈칸을 채우다', phraseEn:'to fill in the blank', baseEn:'to become full' },
+  { base:'낮다', sadong:'낮추다', suffix:'추', phraseKo:'목소리를 낮추다', phraseEn:"to lower one's voice", baseEn:'to be low' },
+  { base:'늦다', sadong:'늦추다', suffix:'추', phraseKo:'속도를 늦추다', phraseEn:'to slow down speed', baseEn:'to be late' },
+  { base:'맞다', sadong:'맞추다', suffix:'추', phraseKo:'시간을 맞추다', phraseEn:'to adjust to the time', baseEn:'to fit / be correct' },
+];
+
+const MAX_REVIEW = 5;
+const NEEDED_STREAK = 2;
+
+function hl(sadong, suffix) {
+  const stem = sadong.slice(0, -1);
+  const idx  = stem.lastIndexOf(suffix[0]);
+  if (idx === -1) return sadong;
+  return stem.slice(0, idx) + `<span class="sfx">${stem.slice(idx)}</span>다`;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─── PAGE SWITCH ─────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  document.getElementById('nav'  + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════════════
+// SWIPE PAGE — fully self-contained
+// ════════════════════════════════════════════════════════════════
+const S = {
+  deck: [], review: [], known: new Set(),
+  current: null, busy: false, isFlipped: false,
+  wrap: null,          // current card DOM node
+
+  pick() {
+    if (this.review.length >= MAX_REVIEW) return this.review[0];
+    if (this.review.length > 0 && this.deck.length > 0)
+      return Math.random() < 0.35 ? this.review[0] : this.deck[0];
+    if (this.review.length > 0) return this.review[0];
+    if (this.deck.length > 0)   return this.deck[0];
+    return null;
+  },
+
+  updateStats() {
+    document.getElementById('s-known').textContent  = this.known.size;
+    document.getElementById('s-review').textContent = this.review.length;
+    document.getElementById('s-left').textContent   = this.deck.length;
+    const qb = document.getElementById('s-qbar');
+    if (this.review.length >= MAX_REVIEW) {
+      qb.textContent = '⚠ Queue full — looping review cards'; qb.className = 'queue-bar warn';
+    } else if (this.review.length > 0) {
+      qb.textContent = `${this.review.length} / ${MAX_REVIEW} in review`; qb.className = 'queue-bar';
+    } else {
+      qb.textContent = this.deck.length > 0 ? '→ New words' : ''; qb.className = 'queue-bar ok';
+    }
+  },
+
+  showCard() {
+    const stage = document.getElementById('s-stage');
+    stage.innerHTML = '';
+    this.isFlipped = false;
+    this.wrap = null;
+
+    if (this.known.size === WORDS.length) {
+      stage.style.display = 'none';
+      document.getElementById('s-done').classList.add('show');
+      return;
+    }
+
+    const idx = this.pick();
+    if (idx === null) return;
+    this.current = idx;
+    const w = WORDS[idx];
+
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap';
+    wrap.innerHTML = `
+      <div class="swipe-lbl left">Review</div>
+      <div class="swipe-lbl right">Got it!</div>
+      <div class="flipper">
+        <div class="face face-front">
+          <div class="front-label">Translate to Korean</div>
+          <div class="front-en">${w.baseEn}</div>
+          <div class="front-phrase">${w.phraseEn}</div>
+          <div class="tap-hint">tap to reveal (optional)</div>
+        </div>
+        <div class="face face-back">
+          <span class="suffix-badge">~${w.suffix}</span>
+          <div class="base-line"><span class="base-word">${w.base}</span><span class="arr">→</span></div>
+          <div class="sadong-word">${hl(w.sadong, w.suffix)}</div>
+          <div class="div-line"></div>
+          <div class="phrase-ko">${w.phraseKo}</div>
+          <div class="phrase-en-sm">${w.phraseEn}</div>
+        </div>
+        <div class="face-spacer"></div>
+      </div>`;
+
+    stage.appendChild(wrap);
+    this.wrap = wrap;
+    this.updateStats();
+
+    // fade in
+    wrap.style.opacity = '0';
+    wrap.style.transform = 'scale(0.95)';
+    requestAnimationFrame(() => {
+      wrap.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+      wrap.style.opacity = '1';
+      wrap.style.transform = 'scale(1)';
+      setTimeout(() => { if (wrap.isConnected) wrap.style.transition = ''; }, 220);
+    });
+
+    this.initDrag(wrap);
+
+    // flip on tap (only if not a drag)
+    wrap.querySelector('.flipper').addEventListener('click', e => {
+      if (wrap._dragged) return;
+      const f = wrap.querySelector('.flipper');
+      if (this.isFlipped) { f.classList.remove('is-flipped'); this.isFlipped = false; }
+      else                { f.classList.add('is-flipped');    this.isFlipped = true;  }
+    });
+  },
+
+  initDrag(wrap) {
+    const lblL = wrap.querySelector('.swipe-lbl.left');
+    const lblR = wrap.querySelector('.swipe-lbl.right');
+    let startX = 0, dx = 0, active = false;
+
+    const onStart = x => {
+      if (this.busy) return;
+      startX = x; dx = 0; active = true;
+      wrap._dragged = false;
+      wrap.style.transition = '';
+    };
+    const onMove = x => {
+      if (!active || !wrap.isConnected) return;
+      dx = x - startX;
+      if (Math.abs(dx) > 4) wrap._dragged = true;
+      wrap.style.transform = `translateX(${dx}px) rotate(${dx * 0.06}deg)`;
+      const r = Math.min(Math.abs(dx) / 90, 1);
+      lblR.style.opacity = dx > 15 ? r : 0;
+      lblL.style.opacity = dx < -15 ? r : 0;
+    };
+    const onEnd = () => {
+      if (!active) return;
+      active = false;
+      if (!wrap.isConnected) return;
+      if (dx > 90)  { this.flyOut(wrap, 'right'); return; }
+      if (dx < -90) { this.flyOut(wrap, 'left');  return; }
+      // snap back
+      wrap.style.transition = 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+      wrap.style.transform = '';
+      lblL.style.opacity = lblR.style.opacity = 0;
+      setTimeout(() => {
+        if (wrap.isConnected) { wrap.style.transition = ''; wrap._dragged = false; }
+      }, 320);
+    };
+
+    // touch
+    wrap.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
+    wrap.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientX); }, { passive: false });
+    wrap.addEventListener('touchend',   onEnd);
+
+    // mouse — attach move/up to document, clean up after
+    wrap.addEventListener('mousedown', e => {
+      onStart(e.clientX);
+      const mm = e2 => onMove(e2.clientX);
+      const mu = () => { onEnd(); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
+      document.addEventListener('mousemove', mm);
+      document.addEventListener('mouseup', mu);
+    });
+  },
+
+  flyOut(wrap, dir) {
+    if (this.busy) return;
+    this.busy = true;
+    const x = dir === 'right' ? 700 : -700;
+    wrap.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease';
+    wrap.style.transform  = `translateX(${x}px) rotate(${dir === 'right' ? 14 : -14}deg)`;
+    wrap.style.opacity    = '0';
+    setTimeout(() => {
+      // update state
+      const ri = this.review.indexOf(this.current);
+      const di = this.deck.indexOf(this.current);
+      if (ri !== -1) this.review.splice(ri, 1);
+      if (di !== -1) this.deck.splice(di, 1);
+      if (dir === 'right') {
+        this.known.add(this.current);
+      } else {
+        if (!this.review.includes(this.current)) this.review.push(this.current);
+      }
+      this.busy = false;
+      swipeSave();
+      this.showCard();
+    }, 300);
+  }
+};
+
+function swipeOut(dir) { S.flyOut(S.wrap, dir); }
+
+// ── SWIPE PERSISTENCE ──────────────────────────────────────────
+function swipeSave() {
+  localStorage.setItem('sadong_swipe', JSON.stringify({
+    deck:    S.deck,
+    review:  S.review,
+    known:   [...S.known],
+  }));
+}
+
+function swipeLoad() {
+  try {
+    const raw = localStorage.getItem('sadong_swipe');
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    S.deck   = d.deck   || [];
+    S.review = d.review || [];
+    S.known  = new Set(d.known || []);
+    return true;
+  } catch { return false; }
+}
+
+function swipeReset() {
+  localStorage.removeItem('sadong_swipe');
+  S.deck    = shuffle([...Array(WORDS.length).keys()]);
+  S.review  = [];
+  S.known   = new Set();
+  S.current = null;
+  S.busy    = false;
+  S.isFlipped = false;
+  document.getElementById('s-done').classList.remove('show');
+  document.getElementById('s-stage').style.display = '';
+  S.showCard();
+}
+
+// keyboard shortcuts for swipe page
+window.addEventListener('keydown', e => {
+  if (!document.getElementById('pageSwipe').classList.contains('active')) return;
+  if (e.key === 'ArrowRight') S.flyOut(S.wrap, 'right');
+  if (e.key === 'ArrowLeft')  S.flyOut(S.wrap, 'left');
+  if ((e.key === ' ' || e.key === 'Enter') && S.wrap) {
+    e.preventDefault();
+    const f = S.wrap.querySelector('.flipper');
+    if (S.isFlipped) { f.classList.remove('is-flipped'); S.isFlipped = false; }
+    else             { f.classList.add('is-flipped');    S.isFlipped = true; }
+  }
+});
+
+// ════════════════════════════════════════════════════════════════
+// TYPE PAGE — fully self-contained
+// ════════════════════════════════════════════════════════════════
+const T = {
+  deck: [], review: [], known: new Set(),
+  // review items are {idx, streak}
+  current: null,   // {idx, streak} object from review, or plain idx from deck
+  fromReview: false,
+  answered: false,
+
+  pick() {
+    if (this.review.length >= MAX_REVIEW) return { item: this.review[0], fromReview: true };
+    if (this.review.length > 0 && this.deck.length > 0)
+      return Math.random() < 0.35
+        ? { item: this.review[0], fromReview: true }
+        : { item: this.deck[0],   fromReview: false };
+    if (this.review.length > 0) return { item: this.review[0], fromReview: true };
+    if (this.deck.length > 0)   return { item: this.deck[0],   fromReview: false };
+    return null;
+  },
+
+  updateStats() {
+    document.getElementById('t-known').textContent  = this.known.size;
+    document.getElementById('t-review').textContent = this.review.length;
+    document.getElementById('t-left').textContent   = this.deck.length;
+    const qb = document.getElementById('t-qbar');
+    if (this.review.length >= MAX_REVIEW) {
+      qb.textContent = '⚠ Queue full — looping review cards'; qb.className = 'queue-bar warn';
+    } else if (this.review.length > 0) {
+      qb.textContent = `${this.review.length} / ${MAX_REVIEW} in review`; qb.className = 'queue-bar';
+    } else {
+      qb.textContent = this.deck.length > 0 ? '→ New words' : ''; qb.className = 'queue-bar ok';
+    }
+  },
+
+  showCard() {
+    if (this.known.size === WORDS.length) { this.showDone(); return; }
+
+    const pick = this.pick();
+    if (!pick) { this.showDone(); return; }
+
+    this.fromReview = pick.fromReview;
+    this.current    = pick.item;
+    this.answered   = false;
+
+    const idx = this.fromReview ? this.current.idx : this.current;
+    const w   = WORDS[idx];
+    const streak = this.fromReview ? this.current.streak : 0;
+
+    document.getElementById('t-base-en').textContent   = w.baseEn;
+    document.getElementById('t-phrase-en').textContent = w.phraseEn;
+
+    // streak dots
+    const dots = document.getElementById('t-dots');
+    dots.innerHTML = '';
+    for (let i = 0; i < NEEDED_STREAK; i++) {
+      const d = document.createElement('div');
+      d.className = 'sdot' + (i < streak ? ' on' : '');
+      dots.appendChild(d);
+    }
+
+    const inp = document.getElementById('t-input');
+    inp.value = ''; inp.className = 'type-input'; inp.disabled = false;
+    document.getElementById('t-feedback').innerHTML = '';
+    document.getElementById('t-next').style.display   = 'none';
+    document.getElementById('t-submit').style.display = '';
+    inp.focus();
+    this.updateStats();
+  },
+
+  check() {
+    if (this.answered) return;
+    this.answered = true;
+
+    const idx  = this.fromReview ? this.current.idx : this.current;
+    const w    = WORDS[idx];
+    const inp  = document.getElementById('t-input');
+    const val  = inp.value.trim();
+    const ok   = val === w.sadong;
+
+    inp.disabled = true;
+    inp.className = 'type-input ' + (ok ? 'correct' : 'wrong');
+
+    const fb = document.getElementById('t-feedback');
+
+    if (ok) {
+      // increment streak
+      let streak = 1;
+      if (this.fromReview) {
+        this.current.streak++;
+        streak = this.current.streak;
+      }
+      const mastered = streak >= NEEDED_STREAK;
+
+      // light up dot
+      const dots = document.getElementById('t-dots').querySelectorAll('.sdot');
+      if (dots[streak - 1]) dots[streak - 1].classList.add('on');
+
+      fb.innerHTML = `<div class="fb-correct"><span class="fb-correct-icon">✓</span><span class="fb-correct-text">${mastered ? 'Mastered! ★' : `Correct! ${streak}/${NEEDED_STREAK}`}</span></div>`;
+
+      if (mastered) {
+        // graduate
+        this.known.add(idx);
+        if (this.fromReview) this.review.splice(this.review.indexOf(this.current), 1);
+        else                 this.deck.splice(this.deck.indexOf(this.current), 1);
+      } else {
+        // move to end of review (already there or promote from deck)
+        if (this.fromReview) {
+          this.review.splice(this.review.indexOf(this.current), 1);
+          this.review.push(this.current);
+        } else {
+          this.deck.splice(this.deck.indexOf(this.current), 1);
+          this.review.push({ idx: this.current, streak: 1 });
+        }
+      }
+    } else {
+      fb.innerHTML = `
+        <div>
+          <div class="fb-wrong-lbl">Correct answer</div>
+          <div class="fb-answer">${hl(w.sadong, w.suffix)}</div>
+          <div class="fb-phrase">${w.phraseKo}</div>
+        </div>`;
+
+      if (this.fromReview) {
+        // reset streak, move to end
+        this.current.streak = 0;
+        this.review.splice(this.review.indexOf(this.current), 1);
+        this.review.push(this.current);
+      } else {
+        // add to review queue
+        this.deck.splice(this.deck.indexOf(this.current), 1);
+        if (!this.review.find(r => r.idx === this.current))
+          this.review.push({ idx: this.current, streak: 0 });
+      }
+    }
+
+    document.getElementById('t-submit').style.display = 'none';
+    document.getElementById('t-next').style.display   = 'block';
+    this.updateStats();
+    typeSave();
+  },
+
+  next() { this.showCard(); },
+
+  showDone() {
+    document.getElementById('t-content').style.display = 'none';
+    document.getElementById('t-done').classList.add('show');
+  }
+};
+
+function typeCheck() { T.check(); }
+function typeNext()  { T.next(); }
+
+// ── TYPE PERSISTENCE ───────────────────────────────────────────
+function typeSave() {
+  localStorage.setItem('sadong_type', JSON.stringify({
+    deck:   T.deck,
+    review: T.review,   // [{idx, streak}, ...]
+    known:  [...T.known],
+  }));
+}
+
+function typeLoad() {
+  try {
+    const raw = localStorage.getItem('sadong_type');
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    T.deck   = d.deck   || [];
+    T.review = d.review || [];
+    T.known  = new Set(d.known || []);
+    return true;
+  } catch { return false; }
+}
+
+function typeReset() {
+  localStorage.removeItem('sadong_type');
+  T.deck    = shuffle([...Array(WORDS.length).keys()]);
+  T.review  = [];
+  T.known   = new Set();
+  T.current = null;
+  T.answered = false;
+  document.getElementById('t-done').classList.remove('show');
+  document.getElementById('t-content').style.display = '';
+  T.showCard();
+}
+
+document.getElementById('t-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (!T.answered) typeCheck();
+    else             typeNext();
+  }
+});
+
+// ─── BOOT ────────────────────────────────────────────────────────
+// Swipe: load saved or start fresh
+S.busy = false; S.isFlipped = false; S.wrap = null; S.current = null;
+if (swipeLoad() && (S.deck.length > 0 || S.review.length > 0 || S.known.size > 0)) {
+  document.getElementById('s-done').classList.remove('show');
+  document.getElementById('s-stage').style.display = '';
+  S.showCard();
+} else {
+  swipeReset();
+}
+
+// Type: load saved or start fresh
+T.current = null; T.answered = false; T.fromReview = false;
+if (typeLoad() && (T.deck.length > 0 || T.review.length > 0 || T.known.size > 0)) {
+  document.getElementById('t-done').classList.remove('show');
+  document.getElementById('t-content').style.display = '';
+  T.showCard();
+} else {
+  typeReset();
+}
+</script>
+</body>
+</html>
