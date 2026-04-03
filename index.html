@@ -359,6 +359,53 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
 }
 .type-done-restart:hover { background: rgba(124,106,255,0.22); box-shadow: 0 0 20px var(--accent-glow); }
 
+/* ── LIGHT MODE ── */
+body.light {
+  --bg0: #f0f0f3;
+  --bg1: #e8e8ec;
+  --glass: rgba(255,255,255,0.6);
+  --glass-border: rgba(0,0,0,0.08);
+  --glass-hover: rgba(255,255,255,0.8);
+  --ink: #1a1a2e;
+  --ink-dim: rgba(26,26,46,0.55);
+  --ink-faint: rgba(26,26,46,0.3);
+  --accent: #5b4fcf;
+  --accent-glow: rgba(91,79,207,0.25);
+  --cyan: #0099cc;
+  --cyan-glow: rgba(0,153,204,0.2);
+  --green: #0a7c5c;
+  --green-glow: rgba(10,124,92,0.2);
+  --red: #d63050;
+  --red-glow: rgba(214,48,80,0.2);
+  --muted: rgba(26,26,46,0.45);
+}
+body.light::before {
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(91,79,207,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 80%, rgba(0,153,204,0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 60% 40%, rgba(10,124,92,0.1) 0%, transparent 70%);
+}
+body.light .face,
+body.light .type-card {
+  background: rgba(255,255,255,0.75);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+body.light .type-input {
+  background: rgba(255,255,255,0.8);
+  color: var(--ink);
+}
+body.light .type-input:focus { background: rgba(255,255,255,0.95); }
+body.light .type-input.correct { background: rgba(10,124,92,0.06); }
+body.light .type-input.wrong   { background: rgba(214,48,80,0.06); }
+
+/* toggle button */
+.theme-toggle {
+  font-family: 'Space Mono', monospace; font-size: 13px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  color: var(--ink-dim); cursor: pointer; border-radius: 10px;
+  padding: 10px 12px; transition: all 0.2s; flex-shrink: 0;
+  backdrop-filter: blur(12px); line-height: 1;
+}
 @media (max-width: 400px) {
   .sadong-word { font-size: 28px; } .front-en { font-size: 20px; }
   .type-base-en { font-size: 20px; } .type-input { font-size: 18px; }
@@ -370,6 +417,7 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
 <div class="nav">
   <button class="nav-btn active" id="navSwipe" onclick="showPage('swipe')">🃏 Swipe</button>
   <button class="nav-btn"        id="navType"  onclick="showPage('type')">⌨️ Type</button>
+  <button class="theme-toggle"   id="themeBtn" onclick="toggleTheme()">☀️</button>
 </div>
 
 <!-- ══════════════ SWIPE PAGE ══════════════ -->
@@ -914,7 +962,19 @@ document.getElementById('t-input').addEventListener('keydown', e => {
   }
 });
 
+// ─── THEME ───────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeBtn').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('sadong_theme', isLight ? 'light' : 'dark');
+}
+
 // ─── BOOT ────────────────────────────────────────────────────────
+// Apply saved theme
+if (localStorage.getItem('sadong_theme') === 'light') {
+  document.body.classList.add('light');
+  document.getElementById('themeBtn').textContent = '🌙';
+}
 // Swipe: load saved or start fresh
 S.busy = false; S.isFlipped = false; S.wrap = null; S.current = null;
 if (swipeLoad() && (S.deck.length > 0 || S.review.length > 0 || S.known.size > 0)) {
