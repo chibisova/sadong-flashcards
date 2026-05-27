@@ -521,6 +521,58 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
 .create-delete-btn:hover { border-color: var(--red); background: rgba(255,79,110,0.08); color: var(--red); }
 
 /* ════════════════════════════════
+   PROGRESS PAGE
+════════════════════════════════ */
+.progress-list {
+  width: 100%; max-width: 480px; padding: 10px 20px 60px;
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.prog-item {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 12px 16px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  transition: border-color 0.2s, background 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.prog-item.is-learned {
+  border-color: rgba(0,229,160,0.3);
+  background: rgba(0,229,160,0.04);
+}
+.prog-words  { flex: 1; min-width: 0; }
+.prog-ko {
+  font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 600;
+  color: var(--ink); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.prog-en { font-size: 11px; color: var(--ink-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prog-dots { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.prog-mode-row { display: flex; align-items: center; gap: 5px; }
+.prog-mode-lbl {
+  font-family: 'Space Mono', monospace; font-size: 7px; letter-spacing: 0.1em;
+  color: var(--ink-faint); text-transform: uppercase; width: 26px;
+}
+.prog-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--glass-border);
+}
+.prog-dot.known  { background: var(--green);  box-shadow: 0 0 5px var(--green-glow); }
+.prog-dot.review { background: var(--accent); box-shadow: 0 0 5px var(--accent-glow); }
+.prog-learn-btn {
+  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 6px 9px; border-radius: 8px;
+  border: 1px solid var(--glass-border); background: transparent;
+  color: var(--ink-faint); cursor: pointer; transition: all 0.18s; flex-shrink: 0;
+  white-space: nowrap; line-height: 1.4;
+}
+.prog-learn-btn:hover {
+  border-color: rgba(0,229,160,0.5); color: var(--green); background: rgba(0,229,160,0.08);
+}
+.prog-learn-btn.learned {
+  border-color: rgba(0,229,160,0.45); color: var(--green);
+  background: rgba(0,229,160,0.1); box-shadow: 0 0 8px rgba(0,229,160,0.12);
+}
+
+/* ════════════════════════════════
    NIKL DICTIONARY SUGGESTIONS
 ════════════════════════════════ */
 .nikl-panel {
@@ -592,9 +644,12 @@ body.light::before {
     radial-gradient(ellipse 50% 40% at 85% 80%, rgba(0,153,204,0.14) 0%, transparent 70%),
     radial-gradient(ellipse 40% 40% at 60% 40%, rgba(10,124,92,0.1) 0%, transparent 70%);
 }
-body.light .face, body.light .type-card, body.light .set-card, body.light .word-card {
+body.light .face, body.light .type-card, body.light .set-card, body.light .word-card, body.light .prog-item {
   background: rgba(255,255,255,0.75);
   box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+body.light .prog-item.is-learned {
+  background: rgba(255,255,255,0.55);
 }
 body.light .type-input, body.light .set-input {
   background: rgba(255,255,255,0.8); color: var(--ink);
@@ -626,8 +681,9 @@ body.light .type-input.wrong   { background: rgba(214,48,80,0.06); }
 
 <!-- ══════════════ PRACTICE NAV ══════════════ -->
 <div class="nav" id="mainNav" style="display:none">
-  <button class="nav-btn active" id="navSwipe" onclick="showPage('swipe')">🃏 Swipe</button>
-  <button class="nav-btn"        id="navType"  onclick="showPage('type')">⌨️ Type</button>
+  <button class="nav-btn active" id="navSwipe"    onclick="switchToSwipe()">🃏 Swipe</button>
+  <button class="nav-btn"        id="navType"    onclick="switchToType()">⌨️ Type</button>
+  <button class="nav-btn"        id="navProgress" onclick="showPage('progress');renderProgressList()">📊 Progress</button>
   <button class="icon-btn" onclick="showMenu()" title="Sets">📂</button>
   <button class="icon-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
 </div>
@@ -741,6 +797,24 @@ body.light .type-input.wrong   { background: rgba(214,48,80,0.06); }
     <button class="create-delete-btn" id="createDeleteBtn"
             onclick="deleteCurrentSet()" style="display:none">🗑 Delete this set</button>
   </div>
+</div>
+
+<!-- ══════════════ PROGRESS PAGE ══════════════ -->
+<div class="page" id="pageProgress">
+  <div class="pg-header">
+    <div class="pg-header-top">
+      <div>
+        <div class="pg-label" id="p-pg-label">· Progress</div>
+        <h2>All <em>words</em></h2>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-num muted"  id="p-total">0</span><span class="stat-label">Total</span></div>
+      <div class="stat"><span class="stat-num green"  id="p-learned">0</span><span class="stat-label">Learned</span></div>
+      <div class="stat"><span class="stat-num muted"  id="p-remaining">0</span><span class="stat-label">Remaining</span></div>
+    </div>
+  </div>
+  <div class="progress-list" id="progressList"></div>
 </div>
 
 <script>
@@ -1113,6 +1187,7 @@ function deleteCurrentSet() {
   // Remove progress
   localStorage.removeItem(editingSetId + '_swipe');
   localStorage.removeItem(editingSetId + '_type');
+  localStorage.removeItem(editingSetId + '_learned');
 
   customSets = customSets.filter(s => s.id !== editingSetId);
   saveCustomSets();
@@ -1318,8 +1393,9 @@ function swipeLoad() {
 function swipeReset() {
   if (!activeFolderId) return;
   localStorage.removeItem(activeFolderId + '_swipe');
-  S.deck = shuffle([...Array(WORDS.length).keys()]);
-  S.review = []; S.known = new Set(); S.current = null; S.busy = false; S.isFlipped = false;
+  const ml = loadManualLearned();
+  S.deck = shuffle([...Array(WORDS.length).keys()].filter(i => !ml.has(i)));
+  S.review = []; S.known = new Set(ml); S.current = null; S.busy = false; S.isFlipped = false;
   document.getElementById('s-done').classList.remove('show');
   document.getElementById('s-stage').style.display = '';
   S.showCard();
@@ -1480,8 +1556,9 @@ function typeLoad() {
 function typeReset() {
   if (!activeFolderId) return;
   localStorage.removeItem(activeFolderId + '_type');
-  T.deck = shuffle([...Array(WORDS.length).keys()]);
-  T.review = []; T.known = new Set(); T.current = null; T.answered = false;
+  const ml = loadManualLearned();
+  T.deck = shuffle([...Array(WORDS.length).keys()].filter(i => !ml.has(i)));
+  T.review = []; T.known = new Set(ml); T.current = null; T.answered = false;
   document.getElementById('t-done').classList.remove('show');
   document.getElementById('t-content').style.display = '';
   T.showCard();
@@ -1504,6 +1581,119 @@ function toggleTheme() {
     const el = document.getElementById(id); if (el) el.textContent = icon;
   });
   localStorage.setItem('kf_theme', isLight ? 'light' : 'dark');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROGRESS PAGE
+// ═══════════════════════════════════════════════════════════════
+function loadManualLearned() {
+  try {
+    const raw = localStorage.getItem(activeFolderId + '_learned');
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+function saveManualLearned(set) {
+  localStorage.setItem(activeFolderId + '_learned', JSON.stringify([...set]));
+}
+
+function getWordStatus(idx) {
+  const swipe = S.known.has(idx) ? 'known'
+    : S.review.includes(idx) ? 'review' : 'new';
+  const typeKnown  = T.known.has(idx);
+  const typeReview = T.review.some(r => (typeof r === 'object' ? r.idx : r) === idx);
+  return { swipe, type: typeKnown ? 'known' : typeReview ? 'review' : 'new' };
+}
+
+function renderProgressList() {
+  if (!WORDS.length) return;
+  const list = document.getElementById('progressList');
+  list.innerHTML = '';
+
+  document.getElementById('p-pg-label').textContent =
+    (activeFolder ? activeFolder.pageLabel : '') + ' · Progress';
+
+  const manualLearned = loadManualLearned();
+  let learnedCount = 0;
+
+  WORDS.forEach((w, idx) => {
+    const learned = manualLearned.has(idx);
+    if (learned) learnedCount++;
+    const { swipe, type } = getWordStatus(idx);
+
+    const item = document.createElement('div');
+    item.className = 'prog-item' + (learned ? ' is-learned' : '');
+    item.id = 'prog-item-' + idx;
+    item.innerHTML = `
+      <div class="prog-words">
+        <div class="prog-ko">${w.sadong || w.base}</div>
+        <div class="prog-en">${w.baseEn}</div>
+      </div>
+      <div class="prog-dots">
+        <div class="prog-mode-row">
+          <span class="prog-mode-lbl">swipe</span>
+          <span class="prog-dot ${swipe}"></span>
+        </div>
+        <div class="prog-mode-row">
+          <span class="prog-mode-lbl">type</span>
+          <span class="prog-dot ${type}"></span>
+        </div>
+      </div>
+      <button class="prog-learn-btn${learned ? ' learned' : ''}"
+              onclick="toggleLearnedWord(${idx})">
+        ${learned ? '✓ learned' : 'mark learned'}
+      </button>`;
+    list.appendChild(item);
+  });
+
+  document.getElementById('p-total').textContent     = WORDS.length;
+  document.getElementById('p-learned').textContent   = learnedCount;
+  document.getElementById('p-remaining').textContent = WORDS.length - learnedCount;
+}
+
+function toggleLearnedWord(idx) {
+  const manualLearned = loadManualLearned();
+
+  if (manualLearned.has(idx)) {
+    manualLearned.delete(idx);
+    S.known.delete(idx);
+    T.known.delete(idx);
+    if (!S.deck.includes(idx) && !S.review.includes(idx))
+      S.deck.push(idx);
+    if (!T.deck.includes(idx) && !T.review.some(r => (r.idx ?? r) === idx))
+      T.deck.push(idx);
+  } else {
+    manualLearned.add(idx);
+    S.known.add(idx);
+    T.known.add(idx);
+    S.deck   = S.deck.filter(i => i !== idx);
+    S.review = S.review.filter(i => i !== idx);
+    T.deck   = T.deck.filter(i => i !== idx);
+    T.review = T.review.filter(r => (r.idx ?? r) !== idx);
+  }
+
+  saveManualLearned(manualLearned);
+  swipeSave();
+  typeSave();
+  renderProgressList();
+}
+
+function switchToSwipe() {
+  showPage('swipe');
+  S.updateStats();
+  // If the card currently on screen was just marked learned, skip past it
+  if (S.current !== null && S.known.has(S.current) && !S.busy) {
+    S.showCard();
+  }
+}
+
+function switchToType() {
+  showPage('type');
+  T.updateStats();
+  // If current type card was just marked learned, advance
+  if (T.current !== null && !T.answered) {
+    const idx = typeof T.current === 'object' ? T.current.idx : T.current;
+    if (T.known.has(idx)) T.showCard();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
