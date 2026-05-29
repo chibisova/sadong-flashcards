@@ -630,6 +630,208 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
   display: inline-block;
 }
 
+/* ════════════════════════════════
+   TEST SETUP PAGE
+════════════════════════════════ */
+.test-setup-inner {
+  width: 100%; max-width: 480px; padding: 16px 20px 60px;
+  position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; flex: 1;
+}
+.test-mode-card {
+  background: rgba(13,17,23,0.7); border: 1.5px solid var(--glass-border);
+  border-radius: var(--radius); padding: 16px 18px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  cursor: pointer; transition: all 0.22s ease;
+  display: flex; align-items: center; gap: 14px; user-select: none;
+}
+.test-mode-card.selected {
+  border-color: rgba(124,106,255,0.6); background: rgba(124,106,255,0.1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 20px rgba(124,106,255,0.15);
+}
+.test-mode-icon { font-size: 24px; flex-shrink: 0; line-height: 1; }
+.test-mode-info { flex: 1; }
+.test-mode-name { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 400; color: var(--ink); margin-bottom: 3px; }
+.test-mode-desc { font-size: 11px; color: var(--ink-dim); line-height: 1.5; }
+.test-mode-check {
+  width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--glass-border);
+  background: transparent; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-size: 11px; color: transparent;
+}
+.test-mode-card.selected .test-mode-check {
+  border-color: var(--accent); background: var(--accent); color: #fff;
+}
+.test-start-btn {
+  font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 15px; border-radius: 12px; margin-top: 4px;
+  border: 1px solid rgba(124,106,255,0.5); background: rgba(124,106,255,0.18);
+  color: var(--ink); cursor: pointer; transition: all 0.2s;
+}
+.test-start-btn:hover { background: rgba(124,106,255,0.32); box-shadow: 0 0 20px var(--accent-glow); }
+.test-setup-error {
+  font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+  color: var(--red); text-shadow: 0 0 8px var(--red-glow); text-align: center; min-height: 16px;
+}
+
+/* ════════════════════════════════
+   TEST QUESTION PAGE
+════════════════════════════════ */
+.test-inner {
+  width: 100%; max-width: 480px; padding: 14px 20px 32px;
+  position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1; gap: 12px;
+}
+.test-progress-bar { width: 100%; height: 3px; background: var(--glass-border); border-radius: 2px; overflow: hidden; }
+.test-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan));
+  border-radius: 2px; transition: width 0.5s ease; box-shadow: 0 0 8px var(--accent-glow);
+}
+.test-q-counter {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  color: var(--ink-faint); text-align: right; text-transform: uppercase;
+}
+.test-q-type-badge {
+  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);
+}
+/* match */
+.test-match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.test-match-col  { display: flex; flex-direction: column; gap: 8px; }
+.test-match-item {
+  background: rgba(13,17,23,0.7); border: 1.5px solid var(--glass-border);
+  border-radius: 10px; padding: 10px 12px; cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  backdrop-filter: blur(12px); text-align: center;
+  min-height: 56px; display: flex; align-items: center; justify-content: center;
+}
+.test-match-item:hover { border-color: rgba(124,106,255,0.4); background: rgba(124,106,255,0.08); }
+.test-match-item.selected {
+  border-color: var(--accent); background: rgba(124,106,255,0.18);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+.test-match-item.matched-correct {
+  border-color: var(--green); background: rgba(0,229,160,0.08);
+  opacity: 0.5; pointer-events: none; box-shadow: 0 0 10px var(--green-glow);
+}
+.test-match-item.flash-wrong { border-color: var(--red); background: rgba(255,79,110,0.12); }
+.test-match-en { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink); line-height: 1.4; }
+.test-match-ko { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 600; color: var(--ink); }
+/* tf */
+.test-tf-card {
+  background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 24px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4); position: relative; overflow: hidden;
+}
+.test-tf-card::before {
+  content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.5), transparent);
+}
+.test-tf-en { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 300; color: var(--ink); margin-bottom: 14px; line-height: 1.3; }
+.test-tf-divider { width: 28px; height: 1px; background: var(--glass-border); margin-bottom: 14px; }
+.test-tf-ko { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 600; color: var(--ink); }
+.test-tf-btns { display: flex; gap: 10px; }
+.test-tf-btn {
+  flex: 1; padding: 14px; border-radius: 12px; border: 1.5px solid;
+  font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+  cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-weight: 700;
+}
+.test-tf-btn.true-btn  { border-color: rgba(0,229,160,0.35);  color: var(--green); background: rgba(0,229,160,0.06); }
+.test-tf-btn.true-btn:hover  { background: rgba(0,229,160,0.18);  border-color: var(--green); box-shadow: 0 0 20px var(--green-glow); }
+.test-tf-btn.false-btn { border-color: rgba(255,79,110,0.35); color: var(--red);   background: rgba(255,79,110,0.06); }
+.test-tf-btn.false-btn:hover { background: rgba(255,79,110,0.18); border-color: var(--red);   box-shadow: 0 0 20px var(--red-glow); }
+.test-tf-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.test-tf-result { min-height: 44px; display: flex; align-items: center; }
+.test-tf-result-text {
+  font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.5;
+}
+.test-tf-result-text.correct { color: var(--green); text-shadow: 0 0 10px var(--green-glow); }
+.test-tf-result-text.wrong   { color: var(--red);   text-shadow: 0 0 10px var(--red-glow); }
+/* test next */
+.test-next-btn {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  padding: 13px; border-radius: 10px; border: 1px solid rgba(124,106,255,0.35);
+  background: rgba(124,106,255,0.08); color: var(--ink);
+  cursor: pointer; transition: all 0.2s; display: none; width: 100%; text-transform: uppercase;
+}
+.test-next-btn:hover { background: rgba(124,106,255,0.2); box-shadow: 0 0 16px var(--accent-glow); }
+
+/* ════════════════════════════════
+   TEST RESULTS PAGE
+════════════════════════════════ */
+.test-results-inner {
+  width: 100%; max-width: 480px; padding: 20px 20px 60px;
+  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 16px; flex: 1; text-align: center;
+}
+.test-results-emoji { font-size: 52px; line-height: 1; }
+.test-score-ring { width: 120px; height: 120px; position: relative; flex-shrink: 0; }
+.test-score-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.test-score-pct {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.test-score-num { font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 300; color: var(--ink); line-height: 1; }
+.test-score-sub { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.12em; color: var(--ink-faint); text-transform: uppercase; margin-top: 3px; }
+.test-breakdown {
+  width: 100%; display: flex; flex-direction: column; gap: 10px;
+  background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 16px 18px;
+  backdrop-filter: blur(20px);
+}
+.test-breakdown-row { display: flex; justify-content: space-between; align-items: center; }
+.test-breakdown-lbl { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: var(--ink-dim); text-transform: uppercase; }
+.test-breakdown-val { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; }
+.test-results-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.test-again-btn {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  padding: 13px; border-radius: 10px; border: 1px solid rgba(124,106,255,0.5);
+  background: rgba(124,106,255,0.18); color: var(--ink);
+  cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.test-again-btn:hover { background: rgba(124,106,255,0.32); box-shadow: 0 0 20px var(--accent-glow); }
+.test-back-btn {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  padding: 11px; border-radius: 10px; border: 1px solid var(--glass-border);
+  background: transparent; color: var(--ink-dim);
+  cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.test-back-btn:hover { color: var(--ink); border-color: rgba(255,255,255,0.18); }
+
+/* answer review */
+.test-answer-log { width: 100%; text-align: left; }
+.test-answer-log-hdr {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.22em;
+  color: var(--accent); text-transform: uppercase; text-shadow: 0 0 10px var(--accent-glow);
+  padding: 8px 0 12px;
+}
+.test-answer-row {
+  background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+  backdrop-filter: blur(12px); display: flex; align-items: flex-start; gap: 12px;
+}
+.test-answer-row.correct { border-color: rgba(0,229,160,0.2); }
+.test-answer-row.wrong   { border-color: rgba(255,79,110,0.25); }
+.test-answer-icon {
+  font-size: 13px; flex-shrink: 0; margin-top: 2px; line-height: 1;
+  font-family: 'Space Mono', monospace;
+}
+.test-answer-row.correct .test-answer-icon { color: var(--green); text-shadow: 0 0 8px var(--green-glow); }
+.test-answer-row.wrong   .test-answer-icon { color: var(--red);   text-shadow: 0 0 8px var(--red-glow); }
+.test-answer-body { flex: 1; min-width: 0; }
+.test-answer-ko { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 600; color: var(--ink); }
+.test-answer-en { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+.test-answer-detail {
+  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
+  text-transform: uppercase; margin-top: 6px; line-height: 1.5;
+}
+.test-answer-detail.correct { color: var(--green); opacity: 0.8; }
+.test-answer-detail.wrong   { color: var(--red); }
+.test-answer-correction {
+  font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 600;
+  color: var(--ink); margin-top: 4px;
+  border-left: 2px solid var(--green); padding-left: 8px;
+}
+
 /* ── LIGHT MODE ── */
 body.light {
   --bg0: #f0f0f3; --bg1: #e8e8ec;
@@ -648,7 +850,9 @@ body.light::before {
     radial-gradient(ellipse 50% 40% at 85% 80%, rgba(0,153,204,0.14) 0%, transparent 70%),
     radial-gradient(ellipse 40% 40% at 60% 40%, rgba(10,124,92,0.1) 0%, transparent 70%);
 }
-body.light .face, body.light .type-card, body.light .set-card, body.light .word-card, body.light .prog-item {
+body.light .face, body.light .type-card, body.light .set-card, body.light .word-card, body.light .prog-item,
+body.light .test-mode-card, body.light .test-tf-card, body.light .test-breakdown, body.light .test-match-item,
+body.light .test-answer-row {
   background: rgba(255,255,255,0.75);
   box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
 }
@@ -661,6 +865,8 @@ body.light .type-input, body.light .set-input {
 body.light .type-input:focus, body.light .set-input:focus { background: rgba(255,255,255,0.95); }
 body.light .type-input.correct { background: rgba(10,124,92,0.06); }
 body.light .type-input.wrong   { background: rgba(214,48,80,0.06); }
+body.light .test-answer-row.wrong   { background: rgba(214,48,80,0.07);  border-color: rgba(214,48,80,0.3); }
+body.light .test-answer-row.correct { background: rgba(255,255,255,0.75); }
 
 @media (max-width: 400px) {
   .sadong-word { font-size: 28px; } .front-en { font-size: 20px; }
@@ -686,7 +892,8 @@ body.light .type-input.wrong   { background: rgba(214,48,80,0.06); }
 <!-- ══════════════ PRACTICE NAV ══════════════ -->
 <div class="nav" id="mainNav" style="display:none">
   <button class="nav-btn active" id="navSwipe"    onclick="switchToSwipe()">🃏 Swipe</button>
-  <button class="nav-btn"        id="navType"    onclick="switchToType()">⌨️ Type</button>
+  <button class="nav-btn"        id="navType"     onclick="switchToType()">⌨️ Type</button>
+  <button class="nav-btn"        id="navTest"     onclick="openTestSetup()">📝 Test</button>
   <button class="nav-btn"        id="navProgress" onclick="showPage('progress');renderProgressList()">📊 Progress</button>
   <button class="icon-btn" onclick="showMenu()" title="Sets">📂</button>
   <button class="icon-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
@@ -791,8 +998,12 @@ body.light .type-input.wrong   { background: rgba(214,48,80,0.06); }
     <!-- Words -->
     <div class="create-section-hdr">
       <span class="create-section-lbl">Words</span>
-      <span class="create-word-count" id="wordCountLabel">0 words</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="set-edit-btn" onclick="triggerJsonUpload()" title="Import from JSON file">↑ Import JSON</button>
+        <span class="create-word-count" id="wordCountLabel">0 words</span>
+      </div>
     </div>
+    <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="importJsonFile(event)">
 
     <div id="wordList"></div>
 
@@ -819,6 +1030,57 @@ body.light .type-input.wrong   { background: rgba(214,48,80,0.06); }
     </div>
   </div>
   <div class="progress-list" id="progressList"></div>
+</div>
+
+<!-- ══════════════ TEST SETUP PAGE ══════════════ -->
+<div class="page" id="pageTestSetup">
+  <div class="pg-header">
+    <div class="pg-header-top">
+      <div>
+        <div class="pg-label">· Test</div>
+        <h2>Test <em>mode</em></h2>
+      </div>
+    </div>
+  </div>
+  <div class="test-setup-inner">
+    <div class="pg-label" style="margin-top:4px">Select question types</div>
+    <div class="test-mode-card selected" id="tm-match" onclick="toggleTestMode('match')">
+      <div class="test-mode-icon">🎯</div>
+      <div class="test-mode-info">
+        <div class="test-mode-name">Match (3×3)</div>
+        <div class="test-mode-desc">Connect each English meaning to its Korean word</div>
+      </div>
+      <div class="test-mode-check">✓</div>
+    </div>
+    <div class="test-mode-card selected" id="tm-tf" onclick="toggleTestMode('tf')">
+      <div class="test-mode-icon">✅</div>
+      <div class="test-mode-info">
+        <div class="test-mode-name">True / False</div>
+        <div class="test-mode-desc">Is this the correct Korean translation?</div>
+      </div>
+      <div class="test-mode-check">✓</div>
+    </div>
+    <div class="test-mode-card selected" id="tm-type" onclick="toggleTestMode('type')">
+      <div class="test-mode-icon">⌨️</div>
+      <div class="test-mode-info">
+        <div class="test-mode-name">Type in Korean</div>
+        <div class="test-mode-desc">Type the Korean word from its English definition</div>
+      </div>
+      <div class="test-mode-check">✓</div>
+    </div>
+    <div class="test-setup-error" id="testSetupError"></div>
+    <button class="test-start-btn" onclick="startTest()">Start Test →</button>
+  </div>
+</div>
+
+<!-- ══════════════ TEST QUESTION PAGE ══════════════ -->
+<div class="page" id="pageTest">
+  <div class="test-inner" id="testInner"></div>
+</div>
+
+<!-- ══════════════ TEST RESULTS PAGE ══════════════ -->
+<div class="page" id="pageTestResults">
+  <div class="test-results-inner" id="testResultsInner"></div>
 </div>
 
 <script>
@@ -1095,6 +1357,45 @@ function updateWordCount() {
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function triggerJsonUpload() {
+  document.getElementById('jsonFileInput').click();
+}
+
+function importJsonFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('expected an array at root');
+
+      const words = data.map(item => ({
+        word:                item.korean   || item.word   || item.ko || '',
+        definition:          item.english  || item.definition || item.en || '',
+        sampleSentence:      item.sample_korean || item.sampleSentence || item.sentence_ko || '',
+        sentenceTranslation: item.sample_english || item.sentenceTranslation || item.sentence_en || '',
+      })).filter(w => w.word || w.definition);
+
+      if (!words.length) throw new Error('no valid words found in file');
+
+      // Auto-fill title from filename if blank
+      const titleInput = document.getElementById('setTitleInput');
+      if (!titleInput.value.trim()) {
+        titleInput.value = file.name.replace(/\.json$/i, '').replace(/[_-]/g, ' ');
+      }
+
+      document.getElementById('wordList').innerHTML = '';
+      words.forEach(w => addWordRow(w.word, w.definition, w.sampleSentence, w.sentenceTranslation));
+      document.getElementById('createError').textContent = '';
+    } catch (err) {
+      document.getElementById('createError').textContent = '⚠ JSON error: ' + err.message;
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function openCreateSet() {
@@ -1729,6 +2030,475 @@ function switchToType() {
     const idx = typeof T.current === 'object' ? T.current.idx : T.current;
     if (T.known.has(idx)) T.showCard();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEST MODE
+// ═══════════════════════════════════════════════════════════════
+const TEST_MODES = { match: true, tf: true, type: true };
+let testQuestions  = [];
+let testQIdx       = 0;
+let testCorrect    = 0;
+let testTotal      = 0;
+let testAnswerLog  = [];
+
+// match sub-state
+let matchSelected         = null;
+let matchPairs            = {};
+let matchWordIndices      = [];
+let matchFirstAttemptWrong = new Set();
+
+// tf / type sub-state
+let tfAnswered       = false;
+let testTypeAnswered = false;
+
+function showTestPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  document.getElementById('navTest').classList.add('active');
+  document.getElementById('mainNav').style.display = '';
+  const pg = document.getElementById(pageId);
+  gsap.fromTo(pg, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out', clearProps: 'all' });
+}
+
+function openTestSetup() {
+  showTestPage('pageTestSetup');
+}
+
+function toggleTestMode(mode) {
+  TEST_MODES[mode] = !TEST_MODES[mode];
+  const card = document.getElementById('tm-' + mode);
+  card.classList.toggle('selected', TEST_MODES[mode]);
+  document.getElementById('testSetupError').textContent = '';
+}
+
+function startTest() {
+  const selectedModes = Object.entries(TEST_MODES).filter(([, v]) => v).map(([k]) => k);
+  if (!selectedModes.length) {
+    document.getElementById('testSetupError').textContent = '⚠ Select at least one mode.';
+    return;
+  }
+  if (!WORDS.length) {
+    document.getElementById('testSetupError').textContent = '⚠ No words in this set.';
+    return;
+  }
+  testQuestions = buildTestQuestions(selectedModes);
+  testQIdx     = 0;
+  testCorrect  = 0;
+  testAnswerLog = [];
+  testTotal    = testQuestions.reduce((s, q) => s + (q.type === 'match' ? q.wordIndices.length : 1), 0);
+  showTestPage('pageTest');
+  renderTestQuestion();
+}
+
+function buildTestQuestions(modes) {
+  const indices = shuffle([...Array(WORDS.length).keys()]);
+  const buckets = {};
+  modes.forEach(m => buckets[m] = []);
+  indices.forEach((wi, i) => buckets[modes[i % modes.length]].push(wi));
+
+  const questions = [];
+
+  if (buckets.match) {
+    for (let i = 0; i < buckets.match.length; i += 3)
+      questions.push({ type: 'match', wordIndices: buckets.match.slice(i, i + 3) });
+  }
+  if (buckets.tf) {
+    buckets.tf.forEach(wi => {
+      const others = indices.filter(w => w !== wi);
+      const isCorrect = !others.length || Math.random() < 0.5;
+      const shownKoIdx = isCorrect ? wi : others[Math.floor(Math.random() * others.length)];
+      questions.push({ type: 'tf', wordIdx: wi, shownKoIdx, isCorrect });
+    });
+  }
+  if (buckets.type) {
+    buckets.type.forEach(wi => questions.push({ type: 'type', wordIdx: wi }));
+  }
+
+  return shuffle(questions);
+}
+
+function wordsAnsweredBefore(idx) {
+  return testQuestions.slice(0, idx).reduce((s, q) => s + (q.type === 'match' ? q.wordIndices.length : 1), 0);
+}
+
+function renderTestQuestion() {
+  if (testQIdx >= testQuestions.length) { showTestResults(); return; }
+
+  const q = testQuestions[testQIdx];
+  const pct = testTotal > 0 ? (wordsAnsweredBefore(testQIdx) / testTotal) * 100 : 0;
+  const typeLabel = q.type === 'match' ? '🎯 Match' : q.type === 'tf' ? '✅ True / False' : '⌨️ Type';
+
+  const inner = document.getElementById('testInner');
+  inner.innerHTML = `
+    <div class="test-progress-bar"><div class="test-progress-fill" style="width:${pct}%"></div></div>
+    <div class="test-q-counter">${testQIdx + 1} / ${testQuestions.length}</div>
+    <div class="test-q-type-badge">${typeLabel}</div>`;
+
+  if (q.type === 'match')  renderMatchQ(q);
+  else if (q.type === 'tf') renderTFQ(q);
+  else                     renderTypeQ(q);
+}
+
+/* ── MATCH ── */
+function renderMatchQ(q) {
+  matchWordIndices         = q.wordIndices;
+  matchSelected            = null;
+  matchPairs               = {};
+  matchFirstAttemptWrong   = new Set();
+
+  const koShuffled = shuffle([...q.wordIndices]);
+  const inner = document.getElementById('testInner');
+
+  const grid = document.createElement('div');
+  grid.className = 'test-match-grid';
+
+  const enCol = document.createElement('div'); enCol.className = 'test-match-col';
+  const koCol = document.createElement('div'); koCol.className = 'test-match-col';
+
+  q.wordIndices.forEach(wi => {
+    const w = WORDS[wi];
+    const el = document.createElement('div');
+    el.className = 'test-match-item';
+    el.dataset.wordIdx = wi; el.dataset.side = 'en';
+    el.innerHTML = `<span class="test-match-en">${w.baseEn}</span>`;
+    el.addEventListener('click', () => onMatchClick(el));
+    enCol.appendChild(el);
+  });
+
+  koShuffled.forEach(wi => {
+    const w = WORDS[wi];
+    const el = document.createElement('div');
+    el.className = 'test-match-item';
+    el.dataset.wordIdx = wi; el.dataset.side = 'ko';
+    el.innerHTML = `<span class="test-match-ko">${w.sadong || w.base}</span>`;
+    el.addEventListener('click', () => onMatchClick(el));
+    koCol.appendChild(el);
+  });
+
+  grid.appendChild(enCol);
+  grid.appendChild(koCol);
+  inner.appendChild(grid);
+
+  gsap.from(grid.querySelectorAll('.test-match-item'), {
+    y: 12, opacity: 0, duration: 0.3, stagger: 0.06, ease: 'power2.out', clearProps: 'all'
+  });
+}
+
+function onMatchClick(el) {
+  if (el.classList.contains('matched-correct')) return;
+  const wordIdx = parseInt(el.dataset.wordIdx);
+  const side    = el.dataset.side;
+
+  if (!matchSelected) {
+    el.classList.add('selected');
+    matchSelected = { side, wordIdx, el };
+    return;
+  }
+  if (matchSelected.el === el) {
+    el.classList.remove('selected');
+    matchSelected = null;
+    return;
+  }
+  if (matchSelected.side === side) {
+    matchSelected.el.classList.remove('selected');
+    el.classList.add('selected');
+    matchSelected = { side, wordIdx, el };
+    return;
+  }
+
+  const enIdx = side === 'en' ? wordIdx : matchSelected.wordIdx;
+  const koIdx = side === 'ko' ? wordIdx : matchSelected.wordIdx;
+  const enEl  = side === 'en' ? el : matchSelected.el;
+  const koEl  = side === 'ko' ? el : matchSelected.el;
+
+  matchSelected = null;
+
+  if (enIdx === koIdx) {
+    enEl.classList.remove('selected'); koEl.classList.remove('selected');
+    enEl.classList.add('matched-correct'); koEl.classList.add('matched-correct');
+    const matchCorrect = !matchFirstAttemptWrong.has(enIdx);
+    if (matchCorrect) testCorrect++;
+    testAnswerLog.push({ type: 'match', wordIdx: enIdx, correct: matchCorrect });
+    matchPairs[enIdx] = true;
+    if (Object.keys(matchPairs).length === matchWordIndices.length) {
+      setTimeout(() => { testQIdx++; renderTestQuestion(); }, 650);
+    }
+  } else {
+    matchFirstAttemptWrong.add(enIdx);
+    [enEl, koEl].forEach(e => {
+      e.classList.remove('selected');
+      e.classList.add('flash-wrong');
+      gsap.fromTo(e, { x: 0 }, {
+        keyframes: { x: [-8, 8, -5, 5, 0] }, duration: 0.3, ease: 'none',
+        clearProps: 'transform',
+        onComplete: () => e.classList.remove('flash-wrong')
+      });
+    });
+  }
+}
+
+/* ── TRUE / FALSE ── */
+function renderTFQ(q) {
+  tfAnswered = false;
+  const w       = WORDS[q.wordIdx];
+  const shownKo = WORDS[q.shownKoIdx];
+  const inner   = document.getElementById('testInner');
+
+  const card = document.createElement('div');
+  card.className = 'test-tf-card';
+  card.innerHTML = `
+    <div class="test-tf-en">${w.baseEn}</div>
+    <div class="test-tf-divider"></div>
+    <div class="test-tf-ko">${shownKo.sadong || shownKo.base}</div>`;
+  inner.appendChild(card);
+
+  const result = document.createElement('div');
+  result.className = 'test-tf-result';
+  result.id = 'tfResult';
+  inner.appendChild(result);
+
+  const btns = document.createElement('div');
+  btns.className = 'test-tf-btns';
+  btns.id = 'tfBtns';
+  btns.innerHTML = `
+    <button class="test-tf-btn true-btn"  onclick="answerTF(true)">✓ True</button>
+    <button class="test-tf-btn false-btn" onclick="answerTF(false)">✗ False</button>`;
+  inner.appendChild(btns);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'test-next-btn';
+  nextBtn.id = 'testNextBtn';
+  nextBtn.textContent = 'Next →';
+  nextBtn.onclick = () => { testQIdx++; renderTestQuestion(); };
+  inner.appendChild(nextBtn);
+
+  gsap.from([card, btns], { y: 14, opacity: 0, duration: 0.32, stagger: 0.08, ease: 'power2.out', clearProps: 'all' });
+}
+
+function answerTF(userSaidTrue) {
+  if (tfAnswered) return;
+  tfAnswered = true;
+  const q       = testQuestions[testQIdx];
+  const correct = userSaidTrue === q.isCorrect;
+  if (correct) testCorrect++;
+  testAnswerLog.push({ type: 'tf', wordIdx: q.wordIdx, shownKoIdx: q.shownKoIdx, isCorrect: q.isCorrect, userSaidTrue, correct });
+
+  const result  = document.getElementById('tfResult');
+  const correctW = WORDS[q.wordIdx];
+
+  if (correct) {
+    const msg = q.isCorrect ? '✓ Correct!' : '✓ Correct — that was NOT the right translation.';
+    result.innerHTML = `<span class="test-tf-result-text correct">${msg}</span>`;
+    gsap.fromTo(result.firstElementChild, { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.32, ease: 'back.out(2.4)', clearProps: 'all' });
+  } else {
+    const correctKo = correctW.sadong || correctW.base;
+    const msg = q.isCorrect
+      ? `✗ Wrong — "${correctKo}" IS the correct translation`
+      : `✗ Wrong — the correct answer is: ${correctKo}`;
+    result.innerHTML = `<span class="test-tf-result-text wrong">${msg}</span>`;
+    gsap.fromTo(result.firstElementChild, { x: 0 }, { keyframes: { x: [-9, 9, -6, 6, 0] }, duration: 0.38, ease: 'none', clearProps: 'all' });
+  }
+
+  document.getElementById('tfBtns').querySelectorAll('button').forEach(b => b.disabled = true);
+  document.getElementById('testNextBtn').style.display = 'block';
+}
+
+/* ── TYPE ── */
+function renderTypeQ(q) {
+  testTypeAnswered = false;
+  const w     = WORDS[q.wordIdx];
+  const inner = document.getElementById('testInner');
+
+  const card = document.createElement('div');
+  card.className = 'type-card';
+  card.innerHTML = `
+    <div class="type-prompt-lbl">Type in Korean</div>
+    <div class="type-base-en">${w.baseEn}</div>
+    <div class="type-phrase-en">${w.phraseEn || ''}</div>`;
+  inner.appendChild(card);
+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'type-input-row';
+  inputRow.innerHTML = `
+    <input class="type-input" id="testTypeInput" type="text" placeholder="Type in Korean…"
+           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="type-submit" id="testTypeSubmit" onclick="checkTestType()">Check</button>`;
+  inner.appendChild(inputRow);
+
+  const feedback = document.createElement('div');
+  feedback.className = 'type-feedback';
+  feedback.id = 'testTypeFeedback';
+  inner.appendChild(feedback);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'test-next-btn';
+  nextBtn.id = 'testNextBtn';
+  nextBtn.textContent = 'Next →';
+  nextBtn.onclick = () => { testQIdx++; renderTestQuestion(); };
+  inner.appendChild(nextBtn);
+
+  const inp = document.getElementById('testTypeInput');
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (!testTypeAnswered) checkTestType();
+      else { testQIdx++; renderTestQuestion(); }
+    }
+  });
+
+  gsap.from(card, { y: 14, opacity: 0, duration: 0.32, ease: 'power2.out', clearProps: 'all' });
+  inp.focus();
+}
+
+function checkTestType() {
+  if (testTypeAnswered) return;
+  testTypeAnswered = true;
+  const q   = testQuestions[testQIdx];
+  const w   = WORDS[q.wordIdx];
+  const inp = document.getElementById('testTypeInput');
+  const val = inp.value.trim();
+  const ok  = val === w.sadong;
+
+  if (ok) testCorrect++;
+  testAnswerLog.push({ type: 'type', wordIdx: q.wordIdx, userInput: val, correct: ok });
+  inp.disabled = true;
+  inp.className = 'type-input ' + (ok ? 'correct' : 'wrong');
+
+  const fb = document.getElementById('testTypeFeedback');
+  if (ok) {
+    fb.innerHTML = `<div class="fb-correct"><span class="fb-correct-icon">✓</span><span class="fb-correct-text">Correct!</span></div>`;
+    gsap.fromTo(fb.firstElementChild, { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.32, ease: 'back.out(2.4)', clearProps: 'all' });
+  } else {
+    fb.innerHTML = `
+      <div>
+        <div class="fb-wrong-lbl">Correct answer</div>
+        <div class="fb-answer">${hl(w.sadong, w.suffix)}</div>
+        ${w.phraseKo ? `<div class="fb-phrase">${w.phraseKo}</div>` : ''}
+      </div>`;
+    gsap.fromTo(inp, { x: 0 }, { keyframes: { x: [-7, 7, -5, 5, 0] }, duration: 0.3, ease: 'none', clearProps: 'all' });
+  }
+
+  document.getElementById('testTypeSubmit').style.display = 'none';
+  document.getElementById('testNextBtn').style.display = 'block';
+}
+
+/* ── RESULTS ── */
+function showTestResults() {
+  showTestPage('pageTestResults');
+  const pct   = testTotal > 0 ? Math.round(testCorrect / testTotal * 100) : 0;
+  const wrong  = testTotal - testCorrect;
+  const emoji  = pct >= 90 ? '🏆' : pct >= 70 ? '🌟' : pct >= 50 ? '👍' : '💪';
+  const title  = pct >= 90 ? '<em>Amazing!</em>' : pct >= 70 ? 'Great <em>job!</em>' : pct >= 50 ? 'Good <em>effort!</em>' : 'Keep <em>practicing!</em>';
+
+  const r            = 44;
+  const circumference = 2 * Math.PI * r;
+  const dashOffset   = circumference * (1 - pct / 100);
+
+  const inner = document.getElementById('testResultsInner');
+  inner.innerHTML = `
+    <div class="test-results-emoji">${emoji}</div>
+    <h2 style="font-size:26px;font-weight:300">${title}</h2>
+    <div class="test-score-ring">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--glass-border)" stroke-width="8"/>
+        <circle id="scoreArc" cx="50" cy="50" r="${r}" fill="none" stroke="var(--green)" stroke-width="8"
+                stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}"
+                stroke-linecap="round" style="filter:drop-shadow(0 0 6px var(--green-glow))"/>
+      </svg>
+      <div class="test-score-pct">
+        <div class="test-score-num">${pct}%</div>
+        <div class="test-score-sub">${testCorrect} / ${testTotal}</div>
+      </div>
+    </div>
+    <div class="test-breakdown">
+      <div class="test-breakdown-row">
+        <span class="test-breakdown-lbl">Correct</span>
+        <span class="test-breakdown-val" style="color:var(--green)">${testCorrect}</span>
+      </div>
+      <div class="test-breakdown-row">
+        <span class="test-breakdown-lbl">Incorrect</span>
+        <span class="test-breakdown-val" style="color:var(--red)">${wrong}</span>
+      </div>
+      <div class="test-breakdown-row">
+        <span class="test-breakdown-lbl">Total words</span>
+        <span class="test-breakdown-val">${testTotal}</span>
+      </div>
+    </div>
+    <div class="test-results-btns">
+      <button class="test-again-btn" onclick="openTestSetup()">Test again →</button>
+      <button class="test-back-btn"  onclick="switchToSwipe()">Back to study</button>
+    </div>
+    <div class="test-answer-log" id="testAnswerLog"></div>`;
+
+  gsap.from(inner.children, { y: 18, opacity: 0, duration: 0.45, stagger: 0.1, ease: 'back.out(1.5)', clearProps: 'all' });
+  gsap.to('#scoreArc', { strokeDashoffset: dashOffset, duration: 1, ease: 'power2.out', delay: 0.5 });
+
+  renderAnswerLog();
+}
+
+function renderAnswerLog() {
+  const container = document.getElementById('testAnswerLog');
+  if (!testAnswerLog.length) return;
+
+  const hdr = document.createElement('div');
+  hdr.className = 'test-answer-log-hdr';
+  hdr.textContent = 'Answer Review';
+  container.appendChild(hdr);
+
+  testAnswerLog.forEach(entry => {
+    const w = WORDS[entry.wordIdx];
+    const row = document.createElement('div');
+    row.className = 'test-answer-row ' + (entry.correct ? 'correct' : 'wrong');
+
+    const icon = entry.correct ? '✓' : '✗';
+
+    if (entry.type === 'match') {
+      row.innerHTML = `
+        <div class="test-answer-icon">${icon}</div>
+        <div class="test-answer-body">
+          <div class="test-answer-ko">${w.sadong || w.base}</div>
+          <div class="test-answer-en">${w.baseEn}</div>
+          <div class="test-answer-detail ${entry.correct ? 'correct' : 'wrong'}">
+            ${entry.correct ? 'Matched first try' : 'Needed multiple attempts'}
+          </div>
+        </div>`;
+
+    } else if (entry.type === 'tf') {
+      const shownKo = WORDS[entry.shownKoIdx];
+      const userAnswer = entry.userSaidTrue ? 'True' : 'False';
+      const correctAnswer = entry.isCorrect ? 'True' : 'False';
+      row.innerHTML = `
+        <div class="test-answer-icon">${icon}</div>
+        <div class="test-answer-body">
+          <div class="test-answer-ko">${w.sadong || w.base}</div>
+          <div class="test-answer-en">${w.baseEn}</div>
+          <div class="test-answer-detail ${entry.correct ? 'correct' : 'wrong'}">
+            Shown: ${shownKo.sadong || shownKo.base} — answered ${userAnswer}
+            ${!entry.correct ? ` · correct: ${correctAnswer}` : ''}
+          </div>
+          ${!entry.correct ? `<div class="test-answer-correction">${w.sadong || w.base}</div>` : ''}
+        </div>`;
+
+    } else {
+      row.innerHTML = `
+        <div class="test-answer-icon">${icon}</div>
+        <div class="test-answer-body">
+          <div class="test-answer-ko">${w.sadong || w.base}</div>
+          <div class="test-answer-en">${w.baseEn}</div>
+          <div class="test-answer-detail ${entry.correct ? 'correct' : 'wrong'}">
+            ${entry.correct ? `Typed correctly` : `Typed: "${entry.userInput || '—'}"`}
+          </div>
+          ${!entry.correct ? `<div class="test-answer-correction">${hl(w.sadong, w.suffix)}</div>` : ''}
+        </div>`;
+    }
+
+    container.appendChild(row);
+  });
+
+  gsap.from(container.querySelectorAll('.test-answer-row'), {
+    y: 10, opacity: 0, duration: 0.3, stagger: 0.04, ease: 'power2.out', clearProps: 'all', delay: 0.6
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
