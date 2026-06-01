@@ -245,21 +245,20 @@ function saveSet() {
 
   errorEl.textContent = '';
 
+  let savedSet;
   if (editingSetId) {
     const idx = customSets.findIndex(s => s.id === editingSetId);
     if (idx !== -1) {
       customSets[idx] = { ...customSets[idx], title, subtitle, emoji: selectedEmoji, rawWords };
+      savedSet = customSets[idx];
     }
   } else {
-    customSets.push({
-      id: 'cset_' + Date.now(),
-      title, subtitle,
-      emoji: selectedEmoji,
-      rawWords,
-    });
+    savedSet = { id: 'cset_' + Date.now(), title, subtitle, emoji: selectedEmoji, rawWords };
+    customSets.push(savedSet);
   }
 
   saveCustomSets();
+  if (savedSet && typeof cloudUpsertSet === 'function') cloudUpsertSet(savedSet);
   showMenu();
 }
 
@@ -267,12 +266,14 @@ function deleteCurrentSet() {
   if (!editingSetId) return;
   if (!confirm(`Delete "${document.getElementById('setTitleInput').value.trim()}"? This removes all progress too.`)) return;
 
-  localStorage.removeItem(editingSetId + '_swipe');
-  localStorage.removeItem(editingSetId + '_type');
-  localStorage.removeItem(editingSetId + '_learned');
+  const deletingId = editingSetId;
+  localStorage.removeItem(deletingId + '_swipe');
+  localStorage.removeItem(deletingId + '_type');
+  localStorage.removeItem(deletingId + '_learned');
 
-  customSets = customSets.filter(s => s.id !== editingSetId);
+  customSets = customSets.filter(s => s.id !== deletingId);
   saveCustomSets();
+  if (typeof cloudDeleteSet === 'function') cloudDeleteSet(deletingId);
   editingSetId = null;
   showMenu();
 }

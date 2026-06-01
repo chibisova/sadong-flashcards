@@ -6,6 +6,7 @@
 <title>Korean Flashcards</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,6 +14,7 @@
 <!-- ══════════════ MENU PAGE ══════════════ -->
 <div class="page active" id="pageMenu">
   <div class="menu-topbar">
+    <button class="icon-btn" id="menuAuthBtn" title="Sign in to sync sets">↑ Sign in</button>
     <button class="icon-btn" id="menuThemeBtn" onclick="toggleTheme()">☀️</button>
   </div>
   <div class="menu-header">
@@ -310,12 +312,55 @@
   </div>
 </div>
 
+<!-- ══════════════ AUTH MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="authOverlay" onclick="if(event.target===this)closeAuthModal()">
+  <div class="pi-modal">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Account</div>
+      <button class="pi-close" onclick="closeAuthModal()">✕</button>
+    </div>
+    <div class="pi-body">
+
+      <div class="pi-step pi-active" id="authStepMain">
+        <div class="pi-tab-row">
+          <button class="pi-tab pi-tab-active" id="authTabSignIn" onclick="authShowTab('signin')">Sign in</button>
+          <button class="pi-tab"               id="authTabSignUp" onclick="authShowTab('signup')">Create account</button>
+        </div>
+        <input class="pi-key-input" id="authEmail"    type="email"    placeholder="Email"
+               autocomplete="email" spellcheck="false">
+        <input class="pi-key-input" id="authPassword" type="password" placeholder="Password (min 6 chars)"
+               autocomplete="current-password">
+        <div class="pi-modal-error" id="authError"></div>
+        <button class="pi-btn" id="authSubmitBtn" onclick="authSubmit()">Sign in →</button>
+        <div class="pi-key-note" style="text-align:center">Sets sync across all your devices when signed in.</div>
+      </div>
+
+      <div class="pi-step" id="authStepLoading">
+        <div class="pi-loading">
+          <div class="pi-spin-ring"></div>
+          <div class="pi-spin-lbl" id="authLoadingLbl">Signing in…</div>
+        </div>
+      </div>
+
+      <div class="pi-step" id="authStepConfirm">
+        <div class="pi-key-note" style="text-align:center;padding:24px 0;font-size:14px">
+          ✉️ Check your email to confirm your account, then sign in.
+        </div>
+        <button class="pi-btn-ghost" onclick="authShowStep('authStepMain')">← Back to sign in</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script src="nikl_lookup.js"></script>
 <script src="js/data.js"></script>
 <script src="js/sets.js"></script>
 <script src="js/study.js"></script>
 <script src="js/test.js"></script>
 <script src="js/import.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

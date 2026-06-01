@@ -1,0 +1,116 @@
+[
+  {
+    "korean": "행사",
+    "english": "event",
+    "sample_korean": "비가 와서 행사가 취소되었습니다.",
+    "sample_english": "The event was canceled because of the rain."
+  },
+  {
+    "korean": "대상",
+    "english": "target",
+    "sample_korean": "대학생들을 대상으로 취업에 관한 설문조사를 실시했습니다.",
+    "sample_english": "The survey of employment was carried out targeting the university students."
+  },
+  {
+    "korean": "대부분",
+    "english": "most (of)",
+    "sample_korean": "책의 내용이 너무 어려워서 대부분 이해가 안 돼요.",
+    "sample_english": "The content of the book is so challenging that I can't understand most of it."
+  },
+  {
+    "korean": "안내하다",
+    "english": "show",
+    "sample_korean": "외국에서 온 손님들에게 우리 학교를 안내할 거예요.",
+    "sample_english": "We will show our school around to the visitors from other countries."
+  },
+  {
+    "korean": "직장",
+    "english": "job",
+    "sample_korean": "지영 씨가 드디어 좋은 직장을 구했대요.",
+    "sample_english": "Ji-young finally got a good job."
+  },
+  {
+    "korean": "참여하다",
+    "english": "participate",
+    "sample_korean": "모든 일에 적극적으로 참여하는 태도가 필요합니다.",
+    "sample_english": "You need to participate more actively in every work you do."
+  },
+  {
+    "korean": "변화",
+    "english": "change",
+    "sample_korean": "나이가 많은 사람들은 젊은 사람들보다 변화에 적응하기 어렵다.",
+    "sample_english": "The old has more trouble adapting to the change."
+  },
+  {
+    "korean": "성공하다",
+    "english": "succeed",
+    "sample_korean": "여러 번의 실패를 거듭한 후 드디어 그 실험에 성공했다.",
+    "sample_english": "After failing many times, the experiment finally succeeded."
+  },
+  {
+    "korean": "영향",
+    "english": "influence",
+    "sample_korean": "화가이신 어머니의 영향으로 일찍부터 그림을 배우기 시작했어요.",
+    "sample_english": "My mother, being the artist, influenced me to learn to draw very early."
+  },
+  {
+    "korean": "세계",
+    "english": "world",
+    "sample_korean": "세계 여러 나라 선수들이 한자리에 모였다.",
+    "sample_english": "Athletes from all around the world gathered in one place."
+  },
+  {
+    "korean": "신청",
+    "english": "apply",
+    "sample_korean": "다음 학기 신청은 이번주까지예요.",
+    "sample_english": "The due date to apply for the next semester is by this week."
+  },
+  {
+    "korean": "오히려",
+    "english": "rather",
+    "sample_korean": "약속 시간에 늦은 친구가 오히려 나에게 화를 냈다.",
+    "sample_english": "My friend was late for the appointment but she was mad rather than me."
+  },
+  {
+    "korean": "지역",
+    "english": "area",
+    "sample_korean": "지역의 특성에 맞는 개발이 필요합니다.",
+    "sample_english": "The development that suits the aspect of the area under concern is needed."
+  },
+  {
+    "korean": "판매하다",
+    "english": "sell",
+    "sample_korean": "현재 약국에서 판매하는 약을 앞으로 편의점에서 판매할 거라고 해요.",
+    "sample_english": "It has been said that the drugs that are now sold in the pharmacy will be sold in the convenience store."
+  },
+  {
+    "korean": "계속",
+    "english": "continue",
+    "sample_korean": "계속 한국에서 살기로 결정했습니다.",
+    "sample_english": "I have decided to keep on living in Korea."
+  },
+  {
+    "korean": "경력",
+    "english": "experience",
+    "sample_korean": "교육 경력이 5년 이상 되시는 분들만 지원할 수 있습니다.",
+    "sample_english": "Only the ones who have more than 5 years of teaching experience can apply for the position."
+  },
+  {
+    "korean": "어리다",
+    "english": "young",
+    "sample_korean": "그 사람은 어린 나이에 이 분야에서 성공했다.",
+    "sample_english": "He became successful in this area at a young age."
+  },
+  {
+    "korean": "관리",
+    "english": "management",
+    "sample_korean": "가죽 옷은 멋있기는 하지만 관리가 힘들어요.",
+    "sample_english": "Leather clothes are fashionable but hard to manage."
+  },
+  {
+    "korean": "사실",
+    "english": "truth",
+    "sample_korean": "더 이상 숨기지 말고 사실을 말해 주세요.",
+    "sample_english": "Do not disguise anymore and just tell me the truth."
+  }
+]
