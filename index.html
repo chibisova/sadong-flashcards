@@ -130,6 +130,16 @@
     <input class="set-input" id="setSubtitleInput" type="text"
            placeholder="Optional short description" maxlength="80">
 
+    <!-- Folder -->
+    <div class="create-field-lbl">Folder</div>
+    <div class="folder-picker-row" id="folderPickerRow"></div>
+    <div id="newFolderRow" style="display:none">
+      <input class="set-input" id="newFolderInput" type="text"
+             placeholder="New folder name" maxlength="30"
+             onkeydown="if(event.key==='Enter')confirmNewFolder()"
+             onblur="confirmNewFolder()">
+    </div>
+
     <!-- Photo import -->
     <button class="add-set-card" onclick="openPhotoImport()" style="border-style:dashed">
       <span class="add-set-plus">✦</span>
@@ -308,6 +318,45 @@
         <button class="pi-btn-ghost" onclick="piGoUpload()">← Try again</button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SET DELETE MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="setDeleteOverlay" onclick="if(event.target===this)closeSetDeleteModal()">
+  <div class="pi-modal folder-delete-modal">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title" id="setDeleteTitle">Delete set?</div>
+      <button class="pi-close" onclick="closeSetDeleteModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <div class="pi-key-note">All progress for this set will be removed.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="pi-btn folder-delete-confirm-btn" onclick="executeSetDelete()">Delete →</button>
+        <button class="pi-btn-ghost" onclick="closeSetDeleteModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FOLDER DELETE MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="folderDeleteOverlay" onclick="if(event.target===this)closeFolderDeleteModal()">
+  <div class="pi-modal folder-delete-modal">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title" id="folderDeleteTitle">Delete folder?</div>
+      <button class="pi-close" onclick="closeFolderDeleteModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <div class="folder-delete-check-row" id="folderDeleteCheckRow">
+        <label class="folder-delete-check-label">
+          <input type="checkbox" id="folderDeleteSetsCheck">
+          <span id="folderDeleteCheckText">Also delete all sets inside</span>
+        </label>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="pi-btn folder-delete-confirm-btn" onclick="executeFolderDelete()">Delete →</button>
+        <button class="pi-btn-ghost" onclick="closeFolderDeleteModal()">Cancel</button>
+      </div>
     </div>
   </div>
 </div>

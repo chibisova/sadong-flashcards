@@ -2,8 +2,10 @@
 // CUSTOM SETS (localStorage)
 // ═══════════════════════════════════════════════════════════════
 let customSets = [];
+let customFolders = [];
 let editingSetId = null;
 let selectedEmoji = '📝';
+let selectedFolderId = 'starter';
 
 const EMOJI_OPTIONS = ['📝','📚','💬','🗣️','🌸','🇰🇷','✏️','🔤','🌊','🍜','🎯','⭐','🎌','🏆','🔥','🌙'];
 
@@ -16,6 +18,102 @@ function loadCustomSets() {
 
 function saveCustomSets() {
   localStorage.setItem('kf_custom_sets', JSON.stringify(customSets));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FOLDERS (localStorage)
+// ═══════════════════════════════════════════════════════════════
+function loadFolders() {
+  try {
+    const raw = localStorage.getItem('kf_folders');
+    customFolders = raw ? JSON.parse(raw) : [];
+  } catch { customFolders = []; }
+}
+
+function saveFolders() {
+  localStorage.setItem('kf_folders', JSON.stringify(customFolders));
+}
+
+function getAllFolders() {
+  return [{ id: 'starter', name: 'Starter' }, ...customFolders];
+}
+
+function createFolder(name) {
+  const folder = { id: 'folder_' + Date.now(), name };
+  customFolders.push(folder);
+  saveFolders();
+  return folder;
+}
+
+function renameFolder(id, name) {
+  const f = customFolders.find(f => f.id === id);
+  if (f) { f.name = name; saveFolders(); }
+}
+
+function deleteFolder(id, deleteSets = false) {
+  if (id === 'starter') return;
+  if (deleteSets) {
+    const deletingIds = customSets.filter(s => s.folderId === id).map(s => s.id);
+    deletingIds.forEach(sid => {
+      localStorage.removeItem(sid + '_swipe');
+      localStorage.removeItem(sid + '_type');
+      localStorage.removeItem(sid + '_learned');
+    });
+    customSets = customSets.filter(s => s.folderId !== id);
+  } else {
+    customSets.forEach(s => { if (s.folderId === id) s.folderId = 'starter'; });
+  }
+  saveCustomSets();
+  customFolders = customFolders.filter(f => f.id !== id);
+  saveFolders();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FOLDER PICKER (create/edit page)
+// ═══════════════════════════════════════════════════════════════
+function buildFolderPicker(currentId) {
+  selectedFolderId = currentId || 'starter';
+  const row = document.getElementById('folderPickerRow');
+  row.innerHTML = '';
+
+  getAllFolders().forEach(f => {
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'folder-pill' + (f.id === selectedFolderId ? ' selected' : '');
+    pill.textContent = f.name;
+    pill.onclick = () => {
+      document.querySelectorAll('.folder-pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      selectedFolderId = f.id;
+      document.getElementById('newFolderRow').style.display = 'none';
+    };
+    row.appendChild(pill);
+  });
+
+  const newBtn = document.createElement('button');
+  newBtn.type = 'button';
+  newBtn.className = 'folder-pill folder-pill-new';
+  newBtn.textContent = '＋ New';
+  newBtn.onclick = () => {
+    document.getElementById('newFolderRow').style.display = '';
+    const inp = document.getElementById('newFolderInput');
+    inp.value = '';
+    inp.focus();
+  };
+  row.appendChild(newBtn);
+
+  document.getElementById('newFolderRow').style.display = 'none';
+}
+
+function confirmNewFolder() {
+  const row = document.getElementById('newFolderRow');
+  if (row.style.display === 'none') return;
+  row.style.display = 'none';
+  const name = document.getElementById('newFolderInput').value.trim();
+  if (!name) return;
+  const folder = createFolder(name);
+  selectedFolderId = folder.id;
+  buildFolderPicker(folder.id);
 }
 
 function rawToEngineWord(r) {
@@ -170,8 +268,10 @@ function importJsonFile(event) {
   reader.readAsText(file);
 }
 
-function openCreateSet() {
+function openCreateSet(folderId) {
+  if (!folderId || typeof folderId !== 'string') folderId = 'starter';
   loadNIKLData();
+  loadFolders();
   editingSetId = null;
   document.getElementById('createPageTitle').textContent = 'New set';
   document.getElementById('setTitleInput').value    = '';
@@ -180,6 +280,7 @@ function openCreateSet() {
   document.getElementById('createError').textContent = '';
   document.getElementById('createDeleteBtn').style.display = 'none';
   buildEmojiPicker('📝');
+  buildFolderPicker(folderId);
   addWordRow();
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -189,6 +290,7 @@ function openCreateSet() {
 
 function openEditSet(id) {
   loadNIKLData();
+  loadFolders();
   const cs = customSets.find(s => s.id === id);
   if (!cs) return;
 
@@ -200,6 +302,7 @@ function openEditSet(id) {
   document.getElementById('createError').textContent = '';
   document.getElementById('createDeleteBtn').style.display = '';
   buildEmojiPicker(cs.emoji || '📝');
+  buildFolderPicker(cs.folderId || 'starter');
 
   (cs.rawWords || []).forEach(w => addWordRow(w.word, w.definition, w.sampleSentence, w.sentenceTranslation));
   if (!cs.rawWords || cs.rawWords.length === 0) addWordRow();
@@ -249,11 +352,11 @@ function saveSet() {
   if (editingSetId) {
     const idx = customSets.findIndex(s => s.id === editingSetId);
     if (idx !== -1) {
-      customSets[idx] = { ...customSets[idx], title, subtitle, emoji: selectedEmoji, rawWords };
+      customSets[idx] = { ...customSets[idx], title, subtitle, emoji: selectedEmoji, rawWords, folderId: selectedFolderId };
       savedSet = customSets[idx];
     }
   } else {
-    savedSet = { id: 'cset_' + Date.now(), title, subtitle, emoji: selectedEmoji, rawWords };
+    savedSet = { id: 'cset_' + Date.now(), title, subtitle, emoji: selectedEmoji, rawWords, folderId: selectedFolderId };
     customSets.push(savedSet);
   }
 
@@ -264,8 +367,17 @@ function saveSet() {
 
 function deleteCurrentSet() {
   if (!editingSetId) return;
-  if (!confirm(`Delete "${document.getElementById('setTitleInput').value.trim()}"? This removes all progress too.`)) return;
+  const title = document.getElementById('setTitleInput').value.trim();
+  document.getElementById('setDeleteTitle').textContent = `Delete "${title}"?`;
+  document.getElementById('setDeleteOverlay').classList.remove('hidden');
+}
 
+function closeSetDeleteModal() {
+  document.getElementById('setDeleteOverlay').classList.add('hidden');
+}
+
+function executeSetDelete() {
+  if (!editingSetId) return;
   const deletingId = editingSetId;
   localStorage.removeItem(deletingId + '_swipe');
   localStorage.removeItem(deletingId + '_type');
@@ -275,6 +387,7 @@ function deleteCurrentSet() {
   saveCustomSets();
   if (typeof cloudDeleteSet === 'function') cloudDeleteSet(deletingId);
   editingSetId = null;
+  closeSetDeleteModal();
   showMenu();
 }
 

@@ -137,6 +137,48 @@ body::after {
   letter-spacing: 0.14em; text-transform: uppercase;
 }
 
+/* folder sections */
+.folder-section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 4px 4px; margin-top: 8px;
+}
+.folder-section-header:first-child { margin-top: 0; }
+.folder-header-left { display: flex; align-items: center; gap: 7px; }
+.folder-emoji { font-size: 15px; line-height: 1; }
+.folder-name {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--accent);
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+.folder-count-badge {
+  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.06em;
+  color: var(--ink-faint); background: var(--glass); border: 1px solid var(--glass-border);
+  padding: 1px 6px; border-radius: 10px;
+}
+.folder-header-actions { display: flex; gap: 4px; }
+.folder-action-btn {
+  font-size: 13px; background: none; border: none; color: var(--ink-faint);
+  cursor: pointer; padding: 3px 6px; border-radius: 6px; transition: all 0.18s; line-height: 1;
+}
+.folder-action-btn:hover { color: var(--ink); background: var(--glass-hover); }
+.folder-del-btn:hover { color: var(--red) !important; background: rgba(255,79,110,0.1) !important; }
+
+/* folder picker (create page) */
+.folder-picker-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.folder-pill {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 6px 12px; border-radius: 20px;
+  border: 1.5px solid var(--glass-border); background: var(--glass);
+  color: var(--ink-dim); cursor: pointer; transition: all 0.18s; line-height: 1;
+}
+.folder-pill:hover { border-color: rgba(124,106,255,0.4); color: var(--ink); background: var(--glass-hover); }
+.folder-pill.selected {
+  border-color: rgba(124,106,255,0.7); background: rgba(124,106,255,0.18);
+  color: var(--ink); box-shadow: 0 0 10px var(--accent-glow);
+}
+.folder-pill-new { border-style: dashed; color: var(--ink-faint); }
+.folder-pill-new:hover { border-color: rgba(124,106,255,0.5); color: var(--accent); background: rgba(124,106,255,0.06); }
+
 /* ── NAV ── */
 .nav {
   display: flex; width: 100%; max-width: 480px;
@@ -903,6 +945,28 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
 .pi-tab + .pi-tab { border-left: 1px solid var(--glass-border); }
 .pi-tab:hover { background: var(--glass-hover); color: var(--ink); }
 .pi-tab.pi-tab-active { background: rgba(124,106,255,0.18); color: var(--ink); }
+.folder-delete-modal { max-width: 360px; }
+.folder-delete-check-row {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 10px; padding: 13px 15px;
+}
+.folder-delete-check-label {
+  display: flex; align-items: center; gap: 11px; cursor: pointer;
+  font-size: 13px; color: var(--ink-dim); user-select: none; line-height: 1.5;
+}
+.folder-delete-check-label input[type="checkbox"] {
+  width: 17px; height: 17px; accent-color: var(--accent);
+  cursor: pointer; flex-shrink: 0;
+}
+.folder-delete-confirm-btn {
+  border-color: rgba(255,79,110,0.45) !important;
+  background: rgba(255,79,110,0.1) !important;
+}
+.folder-delete-confirm-btn:hover {
+  background: rgba(255,79,110,0.22) !important;
+  box-shadow: 0 0 20px var(--red-glow) !important;
+}
+
 .pi-or-warn {
   font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.06em;
   color: var(--accent); line-height: 1.6; padding: 8px 10px;
@@ -1008,6 +1072,9 @@ body.light .pi-modal {
 body.light .pi-result-item { background: rgba(255,255,255,0.8); }
 body.light .pi-key-input { background: rgba(255,255,255,0.8); color: var(--ink); }
 body.light .pi-key-input:focus { background: rgba(255,255,255,0.95); }
+body.light .folder-pill { background: rgba(255,255,255,0.6); }
+body.light .folder-pill.selected { background: rgba(91,79,207,0.14); }
+body.light .folder-count-badge { background: rgba(255,255,255,0.5); }
 
 @media (max-width: 400px) {
   .sadong-word { font-size: 28px; } .front-en { font-size: 20px; }
