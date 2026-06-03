@@ -252,7 +252,7 @@ async function syncFolders() {
 
 async function cloudUpsertFolder(folder) {
   if (!sb || !currentUser) return;
-  const { data, error } = await sb
+  const { error: ue } = await sb
     .from('folders')
     .upsert({
       user_id:    currentUser.id,
@@ -260,12 +260,17 @@ async function cloudUpsertFolder(folder) {
       name:       folder.name,
       is_public:  folder.isPublic || false,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,local_id' })
-    .select('id').single();
-  if (error) { console.error('[supabase] folder upsert:', error.message); return; }
-  if (data?.id) {
+    }, { onConflict: 'user_id,local_id' });
+  if (ue) { console.error('[supabase] folder upsert:', ue.message); return; }
+
+  const { data: row, error: se } = await sb
+    .from('folders').select('id')
+    .eq('user_id', currentUser.id).eq('local_id', folder.id)
+    .single();
+  if (se) { console.error('[supabase] folder select:', se.message); return; }
+  if (row?.id) {
     const f = customFolders.find(f => f.id === folder.id);
-    if (f) { f.supabaseId = data.id; saveFolders(); }
+    if (f) { f.supabaseId = row.id; saveFolders(); }
   }
 }
 

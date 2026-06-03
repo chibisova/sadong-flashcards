@@ -282,31 +282,32 @@ function closeFolderShareModal() {
 
 async function onFolderPublicToggle() {
   if (!_sharingFolderId) return;
-  const isPublic  = document.getElementById('folderPublicToggle').checked;
-  const notReady  = document.getElementById('folderShareNotReady');
+  const isPublic    = document.getElementById('folderPublicToggle').checked;
+  const notReady    = document.getElementById('folderShareNotReady');
   const linkSection = document.getElementById('folderShareLinkSection');
 
-  if (isPublic) {
-    notReady.textContent = 'Saving…';
-    notReady.style.display = '';
-    linkSection.style.display = 'none';
-  }
+  notReady.textContent   = isPublic ? 'Saving…' : '';
+  notReady.style.display = isPublic ? '' : 'none';
+  linkSection.style.display = 'none';
 
-  const folder = await setFolderPublic(_sharingFolderId, isPublic);
+  try {
+    const folder = await setFolderPublic(_sharingFolderId, isPublic);
 
-  if (!isPublic) {
-    notReady.style.display = 'none';
-    linkSection.style.display = 'none';
-    return;
-  }
+    if (!isPublic) { notReady.style.display = 'none'; return; }
 
-  if (folder?.supabaseId) {
-    notReady.style.display = 'none';
-    const link = window.location.origin + window.location.pathname + '?share=' + folder.supabaseId;
-    document.getElementById('folderShareLinkInput').value = link;
-    linkSection.style.display = '';
-  } else {
-    notReady.textContent = '⚠ Could not save — run SQL migrations in Supabase first.';
+    if (folder?.supabaseId) {
+      notReady.style.display = 'none';
+      const link = window.location.origin + window.location.pathname + '?share=' + folder.supabaseId;
+      document.getElementById('folderShareLinkInput').value = link;
+      linkSection.style.display = '';
+    } else {
+      notReady.textContent = '⚠ SQL migrations not run — folders table missing in Supabase.';
+      notReady.style.display = '';
+      document.getElementById('folderPublicToggle').checked = false;
+    }
+  } catch (err) {
+    console.error('[share] toggle error:', err);
+    notReady.textContent = '⚠ Error: ' + err.message;
     notReady.style.display = '';
     document.getElementById('folderPublicToggle').checked = false;
   }
