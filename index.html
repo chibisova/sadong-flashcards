@@ -15,6 +15,7 @@
 <div class="page active" id="pageMenu">
   <div class="menu-topbar">
     <button class="icon-btn" id="folderBackBtn" onclick="showFolderList()" style="display:none;margin-right:auto">← Back</button>
+    <button class="icon-btn" id="menuShareBtn" onclick="openFolderShareModal()" style="display:none" title="Share folder">🔗</button>
     <button class="icon-btn" id="menuAuthBtn" title="Sign in to sync sets">↑ Sign in</button>
     <button class="icon-btn" id="menuThemeBtn" onclick="toggleTheme()">☀️</button>
   </div>
@@ -319,6 +320,60 @@
         <button class="pi-btn-ghost" onclick="piGoUpload()">← Try again</button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FOLDER SHARE MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="folderShareOverlay" onclick="if(event.target===this)closeFolderShareModal()">
+  <div class="pi-modal folder-delete-modal">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Share folder</div>
+      <button class="pi-close" onclick="closeFolderShareModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <div class="folder-delete-check-row">
+        <label class="folder-delete-check-label">
+          <input type="checkbox" id="folderPublicToggle" onchange="onFolderPublicToggle()">
+          <span>Make this folder public</span>
+        </label>
+      </div>
+      <div id="folderShareLinkSection" style="display:none">
+        <div class="pi-key-note">Anyone with this link can view and import this folder.</div>
+        <div class="folder-share-link-row">
+          <input class="pi-key-input folder-share-link-input" id="folderShareLinkInput" readonly>
+          <button class="pi-btn folder-share-copy-btn" id="folderShareCopyBtn" onclick="copyFolderShareLink()">Copy</button>
+        </div>
+      </div>
+      <div id="folderShareNotReady" class="pi-key-note" style="display:none;color:var(--ink-faint)">Sign in to enable sharing.</div>
+      <button class="pi-btn-ghost" onclick="closeFolderShareModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SHARE IMPORT MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="shareImportOverlay">
+  <div class="pi-modal folder-delete-modal">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Shared folder</div>
+      <button class="pi-close" onclick="closeShareImportModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <div id="shareImportLoading">
+        <div class="pi-loading"><div class="pi-spin-ring"></div><div class="pi-spin-lbl">Loading…</div></div>
+      </div>
+      <div id="shareImportContent" style="display:none">
+        <div class="share-import-info">
+          <span class="folder-card-emoji">📁</span>
+          <div>
+            <div class="folder-card-name" id="shareImportName"></div>
+            <div class="folder-card-count" id="shareImportCount"></div>
+          </div>
+        </div>
+        <button class="pi-btn" onclick="executeShareImport()">Import to my account →</button>
+        <button class="pi-btn-ghost" onclick="closeShareImportModal()">Close</button>
+      </div>
+      <div id="shareImportError" class="pi-modal-error" style="display:none;text-align:center;padding:20px 0"></div>
     </div>
   </div>
 </div>

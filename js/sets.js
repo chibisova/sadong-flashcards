@@ -39,15 +39,25 @@ function getAllFolders() {
 }
 
 function createFolder(name) {
-  const folder = { id: 'folder_' + Date.now(), name };
+  const folder = { id: 'folder_' + Date.now(), name, isPublic: false };
   customFolders.push(folder);
   saveFolders();
+  if (typeof cloudUpsertFolder === 'function') cloudUpsertFolder(folder);
   return folder;
 }
 
 function renameFolder(id, name) {
   const f = customFolders.find(f => f.id === id);
-  if (f) { f.name = name; saveFolders(); }
+  if (f) { f.name = name; saveFolders(); if (typeof cloudUpsertFolder === 'function') cloudUpsertFolder(f); }
+}
+
+async function setFolderPublic(id, isPublic) {
+  const f = customFolders.find(f => f.id === id);
+  if (!f) return;
+  f.isPublic = isPublic;
+  saveFolders();
+  if (typeof cloudUpsertFolder === 'function') await cloudUpsertFolder(f);
+  return f;
 }
 
 function deleteFolder(id, deleteSets = false) {
@@ -66,6 +76,7 @@ function deleteFolder(id, deleteSets = false) {
   saveCustomSets();
   customFolders = customFolders.filter(f => f.id !== id);
   saveFolders();
+  if (typeof cloudDeleteFolder === 'function') cloudDeleteFolder(id);
 }
 
 // ═══════════════════════════════════════════════════════════════

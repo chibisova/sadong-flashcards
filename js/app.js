@@ -115,9 +115,11 @@ function renderFolderList() {
   const grid = document.getElementById('setGrid');
   grid.innerHTML = '';
 
-  document.getElementById('folderBackBtn').style.display = 'none';
-  document.getElementById('menuLabel').textContent = '한국어 · Flashcards';
-  document.getElementById('menuH1').innerHTML = 'Choose a <em>folder</em>';
+  _currentFolderContentsId = null;
+  document.getElementById('folderBackBtn').style.display  = 'none';
+  document.getElementById('menuShareBtn').style.display   = 'none';
+  document.getElementById('menuLabel').textContent        = '한국어 · Flashcards';
+  document.getElementById('menuH1').innerHTML             = 'Choose a <em>folder</em>';
 
   const allSets = getAllSets();
 
@@ -145,8 +147,11 @@ function renderFolderList() {
   });
 }
 
+let _currentFolderContentsId = null;
+
 function openFolderContents(folderId) {
   loadFolders();
+  _currentFolderContentsId = folderId;
   const grid = document.getElementById('setGrid');
   grid.innerHTML = '';
 
@@ -154,9 +159,14 @@ function openFolderContents(folderId) {
   const folder     = isBuiltin ? null : getAllFolders().find(f => f.id === folderId);
   const folderName = isBuiltin ? 'Built-in' : (folder ? folder.name : 'Starter');
 
-  document.getElementById('folderBackBtn').style.display = '';
-  document.getElementById('menuLabel').textContent = 'Folder';
-  document.getElementById('menuH1').innerHTML = escHtml(folderName);
+  const isUserFolder  = !isBuiltin && folderId !== 'starter';
+  const isSignedIn    = typeof currentUser !== 'undefined' && !!currentUser;
+  const showShareBtn  = isUserFolder && isSignedIn;
+
+  document.getElementById('folderBackBtn').style.display  = '';
+  document.getElementById('menuShareBtn').style.display   = showShareBtn ? '' : 'none';
+  document.getElementById('menuLabel').textContent        = 'Folder';
+  document.getElementById('menuH1').innerHTML             = escHtml(folderName);
 
   const allSets = getAllSets();
   const sets = allSets.filter(s => {
@@ -234,6 +244,154 @@ function executeFolderDelete() {
   deleteFolder(_pendingDeleteFolderId, deleteSets);
   closeFolderDeleteModal();
   renderFolderList();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FOLDER SHARE (owner side)
+// ═══════════════════════════════════════════════════════════════
+let _sharingFolderId = null;
+
+function openFolderShareModal() {
+  if (!_currentFolderContentsId || _currentFolderContentsId === 'builtin') return;
+  _sharingFolderId = _currentFolderContentsId;
+
+  const folder     = customFolders.find(f => f.id === _sharingFolderId);
+  const isPublic   = folder ? !!folder.isPublic : false;
+  const hasAccount = typeof currentUser !== 'undefined' && currentUser;
+
+  document.getElementById('folderPublicToggle').checked = isPublic;
+  document.getElementById('folderShareNotReady').style.display = hasAccount ? 'none' : '';
+  document.getElementById('folderPublicToggle').disabled = !hasAccount;
+
+  const linkSection = document.getElementById('folderShareLinkSection');
+  if (isPublic && folder?.supabaseId && hasAccount) {
+    linkSection.style.display = '';
+    document.getElementById('folderShareLinkInput').value =
+      window.location.origin + window.location.pathname + '?share=' + folder.supabaseId;
+  } else {
+    linkSection.style.display = 'none';
+  }
+
+  document.getElementById('folderShareOverlay').classList.remove('hidden');
+}
+
+function closeFolderShareModal() {
+  document.getElementById('folderShareOverlay').classList.add('hidden');
+  _sharingFolderId = null;
+}
+
+async function onFolderPublicToggle() {
+  if (!_sharingFolderId) return;
+  const isPublic  = document.getElementById('folderPublicToggle').checked;
+  const notReady  = document.getElementById('folderShareNotReady');
+  const linkSection = document.getElementById('folderShareLinkSection');
+
+  if (isPublic) {
+    notReady.textContent = 'Saving…';
+    notReady.style.display = '';
+    linkSection.style.display = 'none';
+  }
+
+  const folder = await setFolderPublic(_sharingFolderId, isPublic);
+
+  if (!isPublic) {
+    notReady.style.display = 'none';
+    linkSection.style.display = 'none';
+    return;
+  }
+
+  if (folder?.supabaseId) {
+    notReady.style.display = 'none';
+    const link = window.location.origin + window.location.pathname + '?share=' + folder.supabaseId;
+    document.getElementById('folderShareLinkInput').value = link;
+    linkSection.style.display = '';
+  } else {
+    notReady.textContent = '⚠ Could not save — run SQL migrations in Supabase first.';
+    notReady.style.display = '';
+    document.getElementById('folderPublicToggle').checked = false;
+  }
+}
+
+function copyFolderShareLink() {
+  const val = document.getElementById('folderShareLinkInput').value;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById('folderShareCopyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHARE IMPORT (visitor side)
+// ═══════════════════════════════════════════════════════════════
+let _pendingShareImport = null;
+
+async function checkShareParam() {
+  const params = new URLSearchParams(window.location.search);
+  const uuid   = params.get('share');
+  if (!uuid) return;
+
+  document.getElementById('shareImportOverlay').classList.remove('hidden');
+  document.getElementById('shareImportLoading').style.display = '';
+  document.getElementById('shareImportContent').style.display = 'none';
+  document.getElementById('shareImportError').style.display   = 'none';
+
+  if (typeof cloudFetchPublicFolder !== 'function') {
+    showShareImportError('Supabase not configured.');
+    return;
+  }
+
+  const result = await cloudFetchPublicFolder(uuid);
+  if (!result) {
+    showShareImportError('Folder not found or no longer public.');
+    return;
+  }
+
+  _pendingShareImport = result;
+  const { folder, sets } = result;
+  document.getElementById('shareImportName').textContent  = folder.name;
+  document.getElementById('shareImportCount').textContent = `${sets.length} set${sets.length !== 1 ? 's' : ''}`;
+  document.getElementById('shareImportLoading').style.display = 'none';
+  document.getElementById('shareImportContent').style.display = '';
+}
+
+function showShareImportError(msg) {
+  document.getElementById('shareImportLoading').style.display = 'none';
+  const el = document.getElementById('shareImportError');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+function closeShareImportModal() {
+  document.getElementById('shareImportOverlay').classList.add('hidden');
+  _pendingShareImport = null;
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
+function executeShareImport() {
+  if (!_pendingShareImport) return;
+  const { folder, sets } = _pendingShareImport;
+
+  loadFolders();
+  const newFolder = createFolder(folder.name);
+
+  sets.forEach(s => {
+    const newSet = {
+      id:       'cset_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      title:    s.title,
+      subtitle: s.subtitle    || '',
+      emoji:    s.emoji       || '📝',
+      rawWords: s.raw_words   || [],
+      folderId: newFolder.id,
+    };
+    customSets.push(newSet);
+    if (typeof cloudUpsertSet === 'function') cloudUpsertSet(newSet);
+  });
+  saveCustomSets();
+
+  closeShareImportModal();
+  showMenu();
+  openFolderContents(newFolder.id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -381,3 +539,4 @@ if (localStorage.getItem('kf_theme') === 'light' ||
 }
 
 showMenu();
+checkShareParam();

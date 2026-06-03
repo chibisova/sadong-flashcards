@@ -28,12 +28,15 @@ if (sb) {
     currentUser = session?.user || null;
     updateAuthUI();
     if (event === 'SIGNED_IN') {
-      try { await syncSets(); } catch (err) { console.error('[auth] syncSets error:', err.message); }
+      try { await syncFolders(); } catch (err) { console.error('[auth] syncFolders error:', err.message); }
+      try { await syncSets();   } catch (err) { console.error('[auth] syncSets error:',   err.message); }
       renderSetGrid();
     }
     if (event === 'SIGNED_OUT') {
-      customSets = [];
+      customSets    = [];
+      customFolders = [];
       localStorage.removeItem('kf_custom_sets');
+      localStorage.removeItem('kf_folders');
       renderSetGrid();
     }
   });
@@ -186,13 +189,14 @@ async function cloudDeleteSet(localId) {
 
 function localSetToRow(s) {
   return {
-    user_id:    currentUser.id,
-    local_id:   s.id,
-    title:      s.title,
-    subtitle:   s.subtitle || '',
-    emoji:      s.emoji    || '📝',
-    raw_words:  s.rawWords || [],
-    updated_at: new Date().toISOString(),
+    user_id:         currentUser.id,
+    local_id:        s.id,
+    title:           s.title,
+    subtitle:        s.subtitle       || '',
+    emoji:           s.emoji          || '📝',
+    raw_words:       s.rawWords       || [],
+    folder_local_id: s.folderId       || null,
+    updated_at:      new Date().toISOString(),
   };
 }
 
@@ -200,8 +204,86 @@ function rowToLocalSet(r) {
   return {
     id:       r.local_id,
     title:    r.title,
-    subtitle: r.subtitle || '',
-    emoji:    r.emoji    || '📝',
-    rawWords: r.raw_words || [],
+    subtitle: r.subtitle       || '',
+    emoji:    r.emoji          || '📝',
+    rawWords: r.raw_words      || [],
+    folderId: r.folder_local_id || 'starter',
   };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FOLDER CLOUD SYNC
+// ═══════════════════════════════════════════════════════════════
+async function syncFolders() {
+  if (!sb || !currentUser) return;
+
+  const { data: rows, error } = await sb
+    .from('folders').select('*').eq('user_id', currentUser.id);
+  if (error) { console.error('[supabase] folders fetch:', error.message); return; }
+
+  const cloudMap = {};
+  (rows || []).forEach(r => { cloudMap[r.local_id] = r; });
+
+  const toInsert = customFolders
+    .filter(f => !cloudMap[f.id])
+    .map(f => ({
+      user_id:   currentUser.id,
+      local_id:  f.id,
+      name:      f.name,
+      is_public: f.isPublic || false,
+    }));
+  if (toInsert.length) {
+    const { error: ie } = await sb.from('folders').insert(toInsert);
+    if (ie) console.error('[supabase] folders insert:', ie.message);
+  }
+
+  // Re-fetch to get generated UUIDs for newly inserted rows
+  const { data: allRows } = await sb
+    .from('folders').select('*').eq('user_id', currentUser.id);
+
+  customFolders = (allRows || []).map(r => ({
+    id:         r.local_id,
+    name:       r.name,
+    isPublic:   r.is_public,
+    supabaseId: r.id,
+  }));
+  saveFolders();
+}
+
+async function cloudUpsertFolder(folder) {
+  if (!sb || !currentUser) return;
+  const { data, error } = await sb
+    .from('folders')
+    .upsert({
+      user_id:    currentUser.id,
+      local_id:   folder.id,
+      name:       folder.name,
+      is_public:  folder.isPublic || false,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,local_id' })
+    .select('id').single();
+  if (error) { console.error('[supabase] folder upsert:', error.message); return; }
+  if (data?.id) {
+    const f = customFolders.find(f => f.id === folder.id);
+    if (f) { f.supabaseId = data.id; saveFolders(); }
+  }
+}
+
+async function cloudDeleteFolder(localId) {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.from('folders').delete()
+    .eq('user_id', currentUser.id).eq('local_id', localId);
+  if (error) console.error('[supabase] folder delete:', error.message);
+}
+
+async function cloudFetchPublicFolder(folderUuid) {
+  if (!sb) return null;
+  const { data: folder, error: fe } = await sb
+    .from('folders').select('*').eq('id', folderUuid).eq('is_public', true).single();
+  if (fe || !folder) return null;
+  const { data: sets, error: se } = await sb
+    .from('sets').select('*')
+    .eq('user_id', folder.user_id).eq('folder_local_id', folder.local_id);
+  if (se) return null;
+  return { folder, sets: sets || [] };
 }
