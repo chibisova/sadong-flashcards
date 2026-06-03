@@ -85,47 +85,52 @@ function createSetCard(set) {
   return card;
 }
 
-function appendFolderSection(grid, folder, sets) {
+function createFolderCard(folder, name, count) {
   const isBuiltin = folder === null;
   const folderId  = folder ? folder.id : 'builtin';
-  const folderName = folder ? folder.name : 'Built-in';
-  const folderEmoji = isBuiltin ? '📦' : (folder.id === 'starter' ? '🗂️' : '📁');
+  const emoji     = isBuiltin ? '📦' : (folder.id === 'starter' ? '🗂️' : '📁');
   const canManage = !isBuiltin && folder.id !== 'starter';
 
-  const header = document.createElement('div');
-  header.className = 'folder-section-header';
-  header.innerHTML = `
-    <div class="folder-header-left">
-      <span class="folder-emoji">${folderEmoji}</span>
-      <span class="folder-name">${escHtml(folderName)}</span>
-      <span class="folder-count-badge">${sets.length}</span>
+  const card = document.createElement('div');
+  card.className = 'folder-card';
+  card.onclick = () => openFolderContents(folderId);
+  card.innerHTML = `
+    <div class="folder-card-emoji">${emoji}</div>
+    <div class="folder-card-info">
+      <div class="folder-card-name">${escHtml(name)}</div>
+      <div class="folder-card-count">${count} set${count !== 1 ? 's' : ''}</div>
     </div>
-    ${canManage ? `<div class="folder-header-actions">
-      <button class="folder-action-btn" onclick="startRenameFolder('${folder.id}')">✏️</button>
-      <button class="folder-action-btn folder-del-btn" onclick="confirmDeleteFolder('${folder.id}')">🗑</button>
-    </div>` : ''}`;
-  grid.appendChild(header);
-
-  sets.forEach(set => grid.appendChild(createSetCard(set)));
+    ${canManage ? `<div class="folder-card-actions">
+      <button class="folder-action-btn" onclick="event.stopPropagation();startRenameFolder('${folder.id}')">✏️</button>
+      <button class="folder-action-btn folder-del-btn" onclick="event.stopPropagation();confirmDeleteFolder('${folder.id}')">🗑</button>
+    </div>` : ''}
+    <div class="set-arrow">›</div>`;
+  return card;
 }
 
-function renderSetGrid() {
+function renderSetGrid() { renderFolderList(); }
+
+function renderFolderList() {
   loadFolders();
   const grid = document.getElementById('setGrid');
   grid.innerHTML = '';
 
+  document.getElementById('folderBackBtn').style.display = 'none';
+  document.getElementById('menuLabel').textContent = '한국어 · Flashcards';
+  document.getElementById('menuH1').innerHTML = 'Choose a <em>folder</em>';
+
   const allSets = getAllSets();
 
   const builtIns = allSets.filter(s => s.isBuiltIn);
-  if (builtIns.length) appendFolderSection(grid, null, builtIns);
+  if (builtIns.length) grid.appendChild(createFolderCard(null, 'Built-in', builtIns.length));
 
   getAllFolders().forEach(folder => {
-    const sets = allSets.filter(s => {
+    const count = allSets.filter(s => {
       if (s.isBuiltIn) return false;
       if (folder.id === 'starter') return !s.folderId || s.folderId === 'starter';
       return s.folderId === folder.id;
-    });
-    appendFolderSection(grid, folder, sets);
+    }).length;
+    grid.appendChild(createFolderCard(folder, folder.name, count));
   });
 
   const addCard = document.createElement('button');
@@ -135,10 +140,55 @@ function renderSetGrid() {
   grid.appendChild(addCard);
 
   gsap.from(grid.children, {
-    y: 18, opacity: 0, duration: 0.38, stagger: 0.05,
+    y: 18, opacity: 0, duration: 0.38, stagger: 0.07,
     ease: 'power2.out', clearProps: 'all'
   });
 }
+
+function openFolderContents(folderId) {
+  loadFolders();
+  const grid = document.getElementById('setGrid');
+  grid.innerHTML = '';
+
+  const isBuiltin  = folderId === 'builtin';
+  const folder     = isBuiltin ? null : getAllFolders().find(f => f.id === folderId);
+  const folderName = isBuiltin ? 'Built-in' : (folder ? folder.name : 'Starter');
+
+  document.getElementById('folderBackBtn').style.display = '';
+  document.getElementById('menuLabel').textContent = 'Folder';
+  document.getElementById('menuH1').innerHTML = escHtml(folderName);
+
+  const allSets = getAllSets();
+  const sets = allSets.filter(s => {
+    if (isBuiltin) return s.isBuiltIn;
+    if (s.isBuiltIn) return false;
+    if (folderId === 'starter') return !s.folderId || s.folderId === 'starter';
+    return s.folderId === folderId;
+  });
+
+  sets.forEach(set => grid.appendChild(createSetCard(set)));
+
+  if (!isBuiltin) {
+    const addCard = document.createElement('button');
+    addCard.className = 'add-set-card';
+    addCard.onclick = () => openCreateSet(folderId);
+    addCard.innerHTML = `<span class="add-set-plus">＋</span><span class="add-set-label">New set</span>`;
+    grid.appendChild(addCard);
+
+    const transferCard = document.createElement('button');
+    transferCard.className = 'add-set-card';
+    transferCard.onclick = () => openTransferModal(folderId);
+    transferCard.innerHTML = `<span class="add-set-plus">↗</span><span class="add-set-label">Transfer set here</span>`;
+    grid.appendChild(transferCard);
+  }
+
+  gsap.from(grid.children, {
+    y: 18, opacity: 0, duration: 0.38, stagger: 0.07,
+    ease: 'power2.out', clearProps: 'all'
+  });
+}
+
+function showFolderList() { renderFolderList(); }
 
 function startRenameFolder(id) {
   const folder = getAllFolders().find(f => f.id === id);
@@ -146,7 +196,7 @@ function startRenameFolder(id) {
   const newName = prompt('Rename folder:', folder.name);
   if (newName && newName.trim()) {
     renameFolder(id, newName.trim());
-    renderSetGrid();
+    renderFolderList();
   }
 }
 
@@ -183,7 +233,95 @@ function executeFolderDelete() {
   const deleteSets = document.getElementById('folderDeleteSetsCheck').checked;
   deleteFolder(_pendingDeleteFolderId, deleteSets);
   closeFolderDeleteModal();
-  renderSetGrid();
+  renderFolderList();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRANSFER SETS
+// ═══════════════════════════════════════════════════════════════
+let _transferTargetFolderId = null;
+let _transferSelectedIds    = new Set();
+
+function openTransferModal(folderId) {
+  _transferTargetFolderId = folderId;
+  _transferSelectedIds    = new Set();
+
+  const allSets   = getAllSets();
+  const otherSets = allSets.filter(s => {
+    if (s.isBuiltIn) return false;
+    const cs = customSets.find(c => c.id === s.id);
+    const csFolder = cs ? (cs.folderId || 'starter') : 'starter';
+    if (folderId === 'starter') return csFolder !== 'starter';
+    return csFolder !== folderId;
+  });
+
+  const list     = document.getElementById('transferSetList');
+  const emptyMsg = document.getElementById('transferEmptyMsg');
+  const btn      = document.getElementById('transferConfirmBtn');
+  list.innerHTML = '';
+
+  if (!otherSets.length) {
+    emptyMsg.style.display = '';
+    btn.style.display = 'none';
+  } else {
+    emptyMsg.style.display = 'none';
+    btn.style.display = '';
+    btn.disabled = true;
+    btn.textContent = 'Select sets to move';
+
+    otherSets.forEach(set => {
+      const cs           = customSets.find(c => c.id === set.id);
+      const csFolder     = cs ? (cs.folderId || 'starter') : 'starter';
+      const srcFolder    = getAllFolders().find(f => f.id === csFolder);
+      const srcName      = srcFolder ? srcFolder.name : 'Starter';
+
+      const item = document.createElement('div');
+      item.className = 'transfer-set-item';
+      item.innerHTML = `
+        <span class="transfer-set-emoji">${set.emoji}</span>
+        <div class="transfer-set-body">
+          <div class="transfer-set-name">${escHtml(set.title)}</div>
+          <div class="transfer-set-src">in ${escHtml(srcName)}</div>
+        </div>
+        <span class="transfer-check">○</span>`;
+      item.onclick = () => {
+        if (_transferSelectedIds.has(set.id)) {
+          _transferSelectedIds.delete(set.id);
+          item.classList.remove('selected');
+          item.querySelector('.transfer-check').textContent = '○';
+        } else {
+          _transferSelectedIds.add(set.id);
+          item.classList.add('selected');
+          item.querySelector('.transfer-check').textContent = '✓';
+        }
+        const n = _transferSelectedIds.size;
+        btn.disabled = n === 0;
+        btn.textContent = n === 0
+          ? 'Select sets to move'
+          : `Move ${n} set${n > 1 ? 's' : ''} here →`;
+      };
+      list.appendChild(item);
+    });
+  }
+
+  document.getElementById('transferSetOverlay').classList.remove('hidden');
+}
+
+function closeTransferModal() {
+  document.getElementById('transferSetOverlay').classList.add('hidden');
+  _transferTargetFolderId = null;
+  _transferSelectedIds    = new Set();
+}
+
+function executeTransfer() {
+  if (!_transferTargetFolderId || !_transferSelectedIds.size) return;
+  customSets.forEach(s => {
+    if (_transferSelectedIds.has(s.id)) s.folderId = _transferTargetFolderId;
+  });
+  saveCustomSets();
+  const dest = _transferTargetFolderId;
+  closeTransferModal();
+  openFolderContents(dest);
 }
 
 function showMenu() {

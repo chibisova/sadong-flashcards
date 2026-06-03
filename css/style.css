@@ -137,6 +137,33 @@ body::after {
   letter-spacing: 0.14em; text-transform: uppercase;
 }
 
+/* folder cards (main menu) */
+.folder-card {
+  background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 18px 20px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  cursor: pointer; transition: all 0.22s ease; position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 14px;
+}
+.folder-card::before {
+  content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124,106,255,0.45), transparent);
+}
+.folder-card:hover {
+  border-color: rgba(124,106,255,0.4); transform: translateY(-2px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 24px rgba(124,106,255,0.1), inset 0 1px 0 rgba(255,255,255,0.09);
+}
+.folder-card:active { transform: translateY(0); }
+.folder-card-emoji { font-size: 26px; flex-shrink: 0; line-height: 1; }
+.folder-card-info  { flex: 1; min-width: 0; }
+.folder-card-name  {
+  font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 300;
+  color: var(--ink); letter-spacing: -0.01em;
+}
+.folder-card-count { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; margin-top: 4px; }
+.folder-card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
 /* folder sections */
 .folder-section-header {
   display: flex; justify-content: space-between; align-items: center;
@@ -945,6 +972,37 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
 .pi-tab + .pi-tab { border-left: 1px solid var(--glass-border); }
 .pi-tab:hover { background: var(--glass-hover); color: var(--ink); }
 .pi-tab.pi-tab-active { background: rgba(124,106,255,0.18); color: var(--ink); }
+/* transfer sets modal */
+.transfer-set-list {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 340px; overflow-y: auto; padding-right: 2px;
+}
+.transfer-set-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 10px; flex-shrink: 0;
+  background: var(--glass); border: 1.5px solid var(--glass-border);
+  cursor: pointer; transition: all 0.18s; user-select: none;
+}
+.transfer-set-item:hover { border-color: rgba(124,106,255,0.35); background: var(--glass-hover); }
+.transfer-set-item.selected {
+  border-color: rgba(124,106,255,0.6); background: rgba(124,106,255,0.1);
+  box-shadow: 0 0 12px rgba(124,106,255,0.12);
+}
+.transfer-set-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.transfer-set-body  { flex: 1; min-width: 0; }
+.transfer-set-name  { font-size: 14px; color: var(--ink); font-weight: 400; }
+.transfer-set-src   {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  color: var(--ink-faint); text-transform: uppercase; margin-top: 3px;
+}
+.transfer-check {
+  font-family: 'Space Mono', monospace; font-size: 14px;
+  color: var(--ink-faint); flex-shrink: 0; transition: all 0.15s; line-height: 1;
+}
+.transfer-set-item.selected .transfer-check {
+  color: var(--accent); text-shadow: 0 0 8px var(--accent-glow);
+}
+
 .folder-delete-modal { max-width: 360px; }
 .folder-delete-check-row {
   background: var(--glass); border: 1px solid var(--glass-border);
@@ -1072,6 +1130,7 @@ body.light .pi-modal {
 body.light .pi-result-item { background: rgba(255,255,255,0.8); }
 body.light .pi-key-input { background: rgba(255,255,255,0.8); color: var(--ink); }
 body.light .pi-key-input:focus { background: rgba(255,255,255,0.95); }
+body.light .folder-card { background: rgba(255,255,255,0.75); box-shadow: 0 4px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9); }
 body.light .folder-pill { background: rgba(255,255,255,0.6); }
 body.light .folder-pill.selected { background: rgba(91,79,207,0.14); }
 body.light .folder-count-badge { background: rgba(255,255,255,0.5); }

@@ -14,12 +14,13 @@
 <!-- ══════════════ MENU PAGE ══════════════ -->
 <div class="page active" id="pageMenu">
   <div class="menu-topbar">
+    <button class="icon-btn" id="folderBackBtn" onclick="showFolderList()" style="display:none;margin-right:auto">← Back</button>
     <button class="icon-btn" id="menuAuthBtn" title="Sign in to sync sets">↑ Sign in</button>
     <button class="icon-btn" id="menuThemeBtn" onclick="toggleTheme()">☀️</button>
   </div>
   <div class="menu-header">
-    <div class="menu-label">한국어 · Flashcards</div>
-    <h1 class="menu-h1">Choose a <em>set</em></h1>
+    <div class="menu-label" id="menuLabel">한국어 · Flashcards</div>
+    <h1 class="menu-h1" id="menuH1">Choose a <em>folder</em></h1>
   </div>
   <div class="set-grid" id="setGrid"></div>
 </div>
@@ -318,6 +319,24 @@
         <button class="pi-btn-ghost" onclick="piGoUpload()">← Try again</button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TRANSFER SET MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="transferSetOverlay" onclick="if(event.target===this)closeTransferModal()">
+  <div class="pi-modal">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Transfer sets here</div>
+      <button class="pi-close" onclick="closeTransferModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <div class="transfer-set-list" id="transferSetList"></div>
+      <div id="transferEmptyMsg" class="pi-key-note" style="display:none;text-align:center;padding:20px 0">No sets in other folders.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="pi-btn" id="transferConfirmBtn" onclick="executeTransfer()" disabled>Select sets to move</button>
+        <button class="pi-btn-ghost" onclick="closeTransferModal()">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
