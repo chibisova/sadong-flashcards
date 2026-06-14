@@ -135,11 +135,13 @@ function renderFolderList() {
     grid.appendChild(createFolderCard(folder, folder.name, count));
   });
 
-  const addCard = document.createElement('button');
-  addCard.className = 'add-set-card';
-  addCard.onclick = () => openCreateSet();
-  addCard.innerHTML = `<span class="add-set-plus">＋</span><span class="add-set-label">New set</span>`;
-  grid.appendChild(addCard);
+  if (userIsSignedIn()) {
+    const addCard = document.createElement('button');
+    addCard.className = 'add-set-card';
+    addCard.onclick = () => openCreateSet();
+    addCard.innerHTML = `<span class="add-set-plus">＋</span><span class="add-set-label">New set</span>`;
+    grid.appendChild(addCard);
+  }
 
   gsap.from(grid.children, {
     y: 18, opacity: 0, duration: 0.38, stagger: 0.07,
@@ -176,9 +178,17 @@ function openFolderContents(folderId) {
     return s.folderId === folderId;
   });
 
+  if (!isBuiltin && userIsSignedIn() && sets.length > 0) {
+    const memoCard = document.createElement('button');
+    memoCard.className = 'folder-memo-card';
+    memoCard.onclick = () => openMemoMode(folderId);
+    memoCard.innerHTML = `<span class="folder-memo-icon">🧠</span><div class="folder-memo-info"><span class="folder-memo-label">Memo mode</span><span class="folder-memo-sub">Leitner review · all sets</span></div><span class="set-arrow">›</span>`;
+    grid.appendChild(memoCard);
+  }
+
   sets.forEach(set => grid.appendChild(createSetCard(set)));
 
-  if (!isBuiltin) {
+  if (!isBuiltin && userIsSignedIn()) {
     const addCard = document.createElement('button');
     addCard.className = 'add-set-card';
     addCard.onclick = () => openCreateSet(folderId);
@@ -199,6 +209,10 @@ function openFolderContents(folderId) {
 }
 
 function showFolderList() { renderFolderList(); }
+
+function userIsSignedIn() {
+  return typeof currentUser !== 'undefined' && !!currentUser;
+}
 
 function startRenameFolder(id) {
   const folder = getAllFolders().find(f => f.id === id);
@@ -337,23 +351,40 @@ async function checkShareParam() {
   document.getElementById('shareImportContent').style.display = 'none';
   document.getElementById('shareImportError').style.display   = 'none';
 
-  if (typeof cloudFetchPublicFolder !== 'function') {
-    showShareImportError('Supabase not configured.');
-    return;
-  }
+  try {
+    if (typeof cloudFetchPublicFolder !== 'function') {
+      showShareImportError('Supabase not configured.');
+      return;
+    }
 
-  const result = await cloudFetchPublicFolder(uuid);
-  if (!result) {
-    showShareImportError('Folder not found or no longer public.');
-    return;
-  }
+    const result = await cloudFetchPublicFolder(uuid);
+    console.log('[share] fetch result:', result);
 
-  _pendingShareImport = result;
-  const { folder, sets } = result;
-  document.getElementById('shareImportName').textContent  = folder.name;
-  document.getElementById('shareImportCount').textContent = `${sets.length} set${sets.length !== 1 ? 's' : ''}`;
-  document.getElementById('shareImportLoading').style.display = 'none';
-  document.getElementById('shareImportContent').style.display = '';
+    if (!result) {
+      showShareImportError('Folder not found or no longer public.');
+      return;
+    }
+
+    _pendingShareImport = result;
+    const { folder, sets } = result;
+    document.getElementById('shareImportName').textContent  = folder.name;
+    document.getElementById('shareImportCount').textContent = `${sets.length} set${sets.length !== 1 ? 's' : ''}`;
+    document.getElementById('shareImportLoading').style.display = 'none';
+    document.getElementById('shareImportContent').style.display = '';
+
+    const importBtn  = document.getElementById('shareImportBtn');
+    const signInNote = document.getElementById('shareImportSignInNote');
+    if (userIsSignedIn()) {
+      importBtn.style.display  = '';
+      signInNote.style.display = 'none';
+    } else {
+      importBtn.style.display  = 'none';
+      signInNote.style.display = '';
+    }
+  } catch (err) {
+    console.error('[share] checkShareParam error:', err);
+    showShareImportError('Error loading folder: ' + err.message);
+  }
 }
 
 function showShareImportError(msg) {
@@ -371,6 +402,7 @@ function closeShareImportModal() {
 
 function executeShareImport() {
   if (!_pendingShareImport) return;
+  if (!userIsSignedIn()) { openAuthModal(); return; }
   const { folder, sets } = _pendingShareImport;
 
   loadFolders();

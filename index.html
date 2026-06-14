@@ -236,6 +236,75 @@
   <div class="test-results-inner" id="testResultsInner"></div>
 </div>
 
+<!-- ══════════════ MEMO SESSION PAGE ══════════════ -->
+<div class="page" id="pageMemo">
+  <div class="memo-topbar">
+    <button class="icon-btn" onclick="memoBackToFolder()">← Back</button>
+    <div class="memo-progress-wrap">
+      <div class="memo-progress-track">
+        <div class="memo-progress-fill" id="memoProgressBar" style="width:0%"></div>
+      </div>
+      <div class="memo-progress-text" id="memoProgressText">0 / 0</div>
+    </div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="memo-inner" id="memoInner">
+    <div class="memo-box-badge box-1" id="memoBoxBadge">Box 1</div>
+    <div class="memo-card">
+      <div class="memo-prompt-lbl" id="memoPromptLbl">Type in Korean</div>
+      <div class="memo-prompt-word" id="memoPromptWord"></div>
+      <div class="memo-prompt-sub"  id="memoPromptSub"></div>
+    </div>
+    <div class="memo-input-row">
+      <input class="memo-input" id="memoInput" type="text"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             placeholder="Type answer…">
+      <button class="memo-submit" id="memoSubmitBtn" onclick="memoCheck()">Check</button>
+    </div>
+    <div class="memo-feedback" id="memoFeedback"></div>
+    <button class="memo-next" id="memoNextBtn" onclick="memoNext()" style="display:none">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════ MEMO RESULTS PAGE ══════════════ -->
+<div class="page" id="pageMemoResults">
+  <div class="memo-results-wrap" id="memoResultsContent"></div>
+</div>
+
+<!-- ══════════════ MEMO SETUP MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="memoSetupOverlay" onclick="if(event.target===this)closeMemoSetupModal()">
+  <div class="pi-modal">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">🧠 Memo mode</div>
+      <button class="pi-close" onclick="closeMemoSetupModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <div class="create-field-lbl">Direction</div>
+      <div class="memo-dir-row">
+        <label class="memo-dir-opt">
+          <input type="radio" name="memoDir" value="en-ko" checked>
+          <span>EN → KO</span>
+        </label>
+        <label class="memo-dir-opt">
+          <input type="radio" name="memoDir" value="ko-en">
+          <span>KO → EN</span>
+        </label>
+      </div>
+      <div class="create-field-lbl" style="margin-top:16px">Words per session</div>
+      <input class="pi-key-input" id="memoSessionSize" type="number" value="20" min="1" max="200" style="width:100px">
+      <div id="memoSetupImportRow" style="display:none">
+        <div class="create-field-lbl" style="margin-top:16px">Starting point</div>
+        <select class="pi-key-input" id="memoImportFrom" style="width:100%">
+          <option value="progress">Import known words from sets (→ Box 2)</option>
+          <option value="zero">Start all from Box 1</option>
+        </select>
+      </div>
+      <button class="pi-btn" onclick="memoSetupConfirm()" style="margin-top:20px">Start →</button>
+      <button class="pi-btn-ghost" onclick="closeMemoSetupModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════ PHOTO IMPORT MODAL ══════════════ -->
 <div class="pi-overlay hidden" id="piOverlay" onclick="if(event.target===this)closePhotoImport()">
   <div class="pi-modal" id="piModal">
@@ -370,7 +439,11 @@
             <div class="folder-card-count" id="shareImportCount"></div>
           </div>
         </div>
-        <button class="pi-btn" onclick="executeShareImport()">Import to my account →</button>
+        <button class="pi-btn" id="shareImportBtn" onclick="executeShareImport()">Import to my account →</button>
+        <div id="shareImportSignInNote" style="display:none">
+          <div class="pi-key-note" style="text-align:center">Sign in to import this folder.</div>
+          <button class="pi-btn" onclick="closeShareImportModal();openAuthModal()">Sign in →</button>
+        </div>
         <button class="pi-btn-ghost" onclick="closeShareImportModal()">Close</button>
       </div>
       <div id="shareImportError" class="pi-modal-error" style="display:none;text-align:center;padding:20px 0"></div>
@@ -484,6 +557,12 @@
 <script src="js/import.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/memo.js"></script>
 <script src="js/app.js"></script>
+<script>
+document.getElementById('memoInput') && document.getElementById('memoInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); if (!memoAnswered) memoCheck(); else memoNext(); }
+});
+</script>
 </body>
 </html>

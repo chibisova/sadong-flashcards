@@ -282,13 +282,14 @@ async function cloudDeleteFolder(localId) {
 }
 
 async function cloudFetchPublicFolder(folderUuid) {
-  if (!sb) return null;
+  if (!sb) { console.warn('[share] sb not initialized'); return null; }
   const { data: folder, error: fe } = await sb
     .from('folders').select('*').eq('id', folderUuid).eq('is_public', true).single();
-  if (fe || !folder) return null;
+  if (fe) { console.error('[share] folder fetch error:', fe.message); return null; }
+  if (!folder) { console.warn('[share] folder not found or not public'); return null; }
   const { data: sets, error: se } = await sb
     .from('sets').select('*')
     .eq('user_id', folder.user_id).eq('folder_local_id', folder.local_id);
-  if (se) return null;
+  if (se) { console.error('[share] sets fetch error:', se.message); return null; }
   return { folder, sets: sets || [] };
 }

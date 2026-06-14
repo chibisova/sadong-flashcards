@@ -120,6 +120,10 @@ function confirmNewFolder() {
   const row = document.getElementById('newFolderRow');
   if (row.style.display === 'none') return;
   row.style.display = 'none';
+  if (typeof userIsSignedIn === 'function' && !userIsSignedIn()) {
+    if (typeof openAuthModal === 'function') openAuthModal();
+    return;
+  }
   const name = document.getElementById('newFolderInput').value.trim();
   if (!name) return;
   const folder = createFolder(name);
@@ -280,6 +284,10 @@ function importJsonFile(event) {
 }
 
 function openCreateSet(folderId) {
+  if (typeof userIsSignedIn === 'function' && !userIsSignedIn()) {
+    if (typeof openAuthModal === 'function') openAuthModal();
+    return;
+  }
   if (!folderId || typeof folderId !== 'string') folderId = 'starter';
   loadNIKLData();
   loadFolders();
