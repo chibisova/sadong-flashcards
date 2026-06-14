@@ -28,13 +28,17 @@ if (sb) {
     currentUser = session?.user || null;
     updateAuthUI();
     if (event === 'SIGNED_IN') {
-      try { await syncFolders(); } catch (err) { console.error('[auth] syncFolders error:', err.message); }
-      try { await syncSets();   } catch (err) { console.error('[auth] syncSets error:',   err.message); }
+      try { await syncFolders();           } catch (err) { console.error('[auth] syncFolders error:', err.message); }
+      try { await syncSets();              } catch (err) { console.error('[auth] syncSets error:',   err.message); }
+      try { await memoFetchUserStats();     } catch (err) { console.error('[auth] memoUserStats:', err.message); }
+      try { await memoFetchBoxFiveCount();  } catch (err) { console.error('[auth] memoBox5:',      err.message); }
       renderSetGrid();
     }
     if (event === 'SIGNED_OUT') {
-      customSets    = [];
-      customFolders = [];
+      customSets      = [];
+      customFolders   = [];
+      memoTotalCorrect = 0;
+      memoBoxFiveCount = 0;
       localStorage.removeItem('kf_custom_sets');
       localStorage.removeItem('kf_folders');
       renderSetGrid();

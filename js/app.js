@@ -38,7 +38,7 @@ function toggleTheme() {
   document.body.offsetHeight;
   document.body.classList.remove('theme-switching');
   const icon = isLight ? '🌙' : '☀️';
-  ['themeBtn','menuThemeBtn'].forEach(id => {
+  ['themeBtn','menuThemeBtn','memoThemeBtn'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = icon;
   });
   localStorage.setItem('kf_theme', isLight ? 'light' : 'dark');
@@ -112,17 +112,71 @@ function renderSetGrid() { renderFolderList(); }
 
 function renderFolderList() {
   loadFolders();
-  const grid = document.getElementById('setGrid');
-  grid.innerHTML = '';
+  const grid      = document.getElementById('setGrid');
+  const bottomBar = document.getElementById('menuBottomBar');
+  grid.innerHTML  = '';
 
   _currentFolderContentsId = null;
-  document.getElementById('folderBackBtn').style.display  = 'none';
-  document.getElementById('menuShareBtn').style.display   = 'none';
-  document.getElementById('menuLabel').textContent        = '한국어 · Flashcards';
-  document.getElementById('menuH1').innerHTML             = 'Choose a <em>folder</em>';
+  document.getElementById('folderBackBtn').style.display = 'none';
+  document.getElementById('menuShareBtn').style.display  = 'none';
 
+  // Switch header sections
+  document.getElementById('menuListHeader').style.display   = '';
+  document.getElementById('menuFolderHeader').style.display = 'none';
+  document.getElementById('menuFolderMemo').style.display   = 'none';
+
+  // Stats + CTA (signed-in only)
+  const statsWrap = document.getElementById('menuStatsWrap');
+  const ctaBtn    = document.getElementById('menuMemoCta');
+  if (userIsSignedIn()) {
+    memoLoadTodayCount();
+    document.getElementById('menuStatToday').textContent = memoTodayCount;
+    document.getElementById('menuStatTotal').textContent = memoTotalCorrect;
+    document.getElementById('menuStatBox5').textContent  = memoBoxFiveCount;
+    statsWrap.style.display = '';
+
+    // Find first folder that has actual words
+    const customSetsWithWords = getAllSets().filter(s => !s.isBuiltIn && s.words.length > 0);
+    const hasWords = customSetsWithWords.length > 0;
+
+    const lastFolderId = localStorage.getItem('memo_last_folder');
+    let validLastFolder = false;
+    if (lastFolderId) {
+      const folderHasWords = customSetsWithWords.some(s =>
+        (lastFolderId === 'starter' ? (!s.folderId || s.folderId === 'starter') : s.folderId === lastFolderId)
+      );
+      validLastFolder = folderHasWords &&
+        (lastFolderId === 'starter' || getAllFolders().some(f => f.id === lastFolderId));
+      if (!validLastFolder) localStorage.removeItem('memo_last_folder');
+    }
+
+    const hintEl = document.getElementById('menuMemoHint');
+    if (hasWords && validLastFolder) {
+      const folderName = getAllFolders().find(f => f.id === lastFolderId)?.name || 'folder';
+      document.getElementById('menuMemoCtaLabel').textContent = `Continue learning: "${folderName}"`;
+      ctaBtn.onclick = async () => {
+        ctaBtn.disabled = true;
+        try { await openMemoMode(lastFolderId); }
+        catch (err) { console.error('[CTA] error:', err); }
+        finally { ctaBtn.disabled = false; }
+      };
+      ctaBtn.style.display = '';
+      hintEl.style.display = 'none';
+    } else if (hasWords) {
+      ctaBtn.style.display = 'none';
+      hintEl.style.display = '';
+    } else {
+      ctaBtn.style.display = 'none';
+      hintEl.style.display = 'none';
+    }
+  } else {
+    statsWrap.style.display = 'none';
+    ctaBtn.style.display    = 'none';
+    document.getElementById('menuMemoHint').style.display = 'none';
+  }
+
+  // Folder cards
   const allSets = getAllSets();
-
   const builtIns = allSets.filter(s => s.isBuiltIn);
   if (builtIns.length) grid.appendChild(createFolderCard(null, 'Built-in', builtIns.length));
 
@@ -135,12 +189,12 @@ function renderFolderList() {
     grid.appendChild(createFolderCard(folder, folder.name, count));
   });
 
+  // Fixed bottom bar
   if (userIsSignedIn()) {
-    const addCard = document.createElement('button');
-    addCard.className = 'add-set-card';
-    addCard.onclick = () => openCreateSet();
-    addCard.innerHTML = `<span class="add-set-plus">＋</span><span class="add-set-label">New set</span>`;
-    grid.appendChild(addCard);
+    bottomBar.innerHTML = `<button class="menu-bottom-btn" onclick="openCreateSet()">＋ New set</button>`;
+    bottomBar.style.display = '';
+  } else {
+    bottomBar.style.display = 'none';
   }
 
   gsap.from(grid.children, {
@@ -154,21 +208,25 @@ let _currentFolderContentsId = null;
 function openFolderContents(folderId) {
   loadFolders();
   _currentFolderContentsId = folderId;
-  const grid = document.getElementById('setGrid');
-  grid.innerHTML = '';
+  const grid      = document.getElementById('setGrid');
+  const bottomBar = document.getElementById('menuBottomBar');
+  grid.innerHTML  = '';
 
   const isBuiltin  = folderId === 'builtin';
   const folder     = isBuiltin ? null : getAllFolders().find(f => f.id === folderId);
   const folderName = isBuiltin ? 'Built-in' : (folder ? folder.name : 'Starter');
 
-  const isUserFolder  = !isBuiltin && folderId !== 'starter';
-  const isSignedIn    = typeof currentUser !== 'undefined' && !!currentUser;
-  const showShareBtn  = isUserFolder && isSignedIn;
+  const isUserFolder = !isBuiltin && folderId !== 'starter';
+  const showShareBtn = isUserFolder && userIsSignedIn();
 
-  document.getElementById('folderBackBtn').style.display  = '';
-  document.getElementById('menuShareBtn').style.display   = showShareBtn ? '' : 'none';
-  document.getElementById('menuLabel').textContent        = 'Folder';
-  document.getElementById('menuH1').innerHTML             = escHtml(folderName);
+  document.getElementById('folderBackBtn').style.display = '';
+  document.getElementById('menuShareBtn').style.display  = showShareBtn ? '' : 'none';
+
+  // Switch header sections
+  document.getElementById('menuListHeader').style.display   = 'none';
+  document.getElementById('menuFolderHeader').style.display = '';
+  document.getElementById('menuLabel').textContent          = 'Folder';
+  document.getElementById('menuH1').innerHTML               = escHtml(folderName);
 
   const allSets = getAllSets();
   const sets = allSets.filter(s => {
@@ -178,28 +236,26 @@ function openFolderContents(folderId) {
     return s.folderId === folderId;
   });
 
+  // Memo card in its own block above the set list
+  const memoSlot = document.getElementById('menuFolderMemo');
   if (!isBuiltin && userIsSignedIn() && sets.length > 0) {
-    const memoCard = document.createElement('button');
-    memoCard.className = 'folder-memo-card';
-    memoCard.onclick = () => openMemoMode(folderId);
-    memoCard.innerHTML = `<span class="folder-memo-icon">🧠</span><div class="folder-memo-info"><span class="folder-memo-label">Memo mode</span><span class="folder-memo-sub">Leitner review · all sets</span></div><span class="set-arrow">›</span>`;
-    grid.appendChild(memoCard);
+    memoSlot.innerHTML = `<button class="folder-memo-card" onclick="openMemoMode('${escHtml(folderId)}')"><span class="folder-memo-icon">🧠</span><div class="folder-memo-info"><span class="folder-memo-label">Memo mode</span><span class="folder-memo-sub">Leitner review · all sets</span></div><span class="set-arrow">›</span></button>`;
+    memoSlot.style.display = '';
+  } else {
+    memoSlot.innerHTML = '';
+    memoSlot.style.display = 'none';
   }
 
   sets.forEach(set => grid.appendChild(createSetCard(set)));
 
+  // Fixed bottom bar
   if (!isBuiltin && userIsSignedIn()) {
-    const addCard = document.createElement('button');
-    addCard.className = 'add-set-card';
-    addCard.onclick = () => openCreateSet(folderId);
-    addCard.innerHTML = `<span class="add-set-plus">＋</span><span class="add-set-label">New set</span>`;
-    grid.appendChild(addCard);
-
-    const transferCard = document.createElement('button');
-    transferCard.className = 'add-set-card';
-    transferCard.onclick = () => openTransferModal(folderId);
-    transferCard.innerHTML = `<span class="add-set-plus">↗</span><span class="add-set-label">Transfer set here</span>`;
-    grid.appendChild(transferCard);
+    bottomBar.innerHTML = `
+      <button class="menu-bottom-btn" onclick="openCreateSet('${escHtml(folderId)}')">＋ New set</button>
+      <button class="menu-bottom-btn ghost" onclick="openTransferModal('${escHtml(folderId)}')">↗ Transfer set here</button>`;
+    bottomBar.style.display = '';
+  } else {
+    bottomBar.style.display = 'none';
   }
 
   gsap.from(grid.children, {
@@ -566,7 +622,7 @@ loadFolders();
 if (localStorage.getItem('kf_theme') === 'light' ||
     localStorage.getItem('sadong_theme') === 'light') {
   document.body.classList.add('light');
-  ['themeBtn','menuThemeBtn'].forEach(id => {
+  ['themeBtn','menuThemeBtn','memoThemeBtn'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = '🌙';
   });
 }

@@ -879,6 +879,7 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
 }
 .pi-close:hover { color: var(--ink); }
 .pi-body { padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+#memoSetupImportRow { display: flex; flex-direction: column; gap: 10px; }
 .pi-step { display: none; flex-direction: column; gap: 12px; }
 .pi-step.pi-active { display: flex; }
 .pi-key-note { font-size: 12px; color: var(--ink-dim); line-height: 1.7; }
@@ -1164,6 +1165,97 @@ body.light .folder-count-badge { background: rgba(255,255,255,0.5); }
    MEMO MODE
 ════════════════════════════════ */
 
+/* Resume Memo card on menu page */
+/* ── Menu page layout ───────────────────────────────────────────── */
+
+.menu-list-header {
+  width: 100%; max-width: 480px;
+  padding: 10px 20px 4px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* Stats block — 3 columns */
+.menu-stats-wrap {
+  display: flex; align-items: center;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 14px 20px;
+}
+body.light .menu-stats-wrap { background: rgba(255,255,255,0.6); }
+.menu-stat-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.menu-stat-num {
+  font-size: 26px; font-weight: 700; line-height: 1; color: var(--ink);
+}
+.menu-stat-num.cyan  { color: var(--cyan); }
+.menu-stat-num.green { color: var(--green); }
+.menu-stat-lbl {
+  font-family: 'Space Mono', monospace; font-size: 8px;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim);
+}
+.menu-stat-div {
+  width: 1px; background: var(--glass-border); align-self: stretch; margin: 0 8px;
+}
+
+/* Memo CTA button */
+.menu-memo-cta {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(124,106,255,0.2) 0%, rgba(0,212,255,0.12) 100%);
+  border: 1px solid rgba(124,106,255,0.4); border-radius: var(--radius);
+  color: var(--ink); cursor: pointer;
+  font-family: 'Space Mono', monospace; font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+}
+.menu-memo-cta:hover { background: linear-gradient(135deg, rgba(124,106,255,0.3) 0%, rgba(0,212,255,0.18) 100%); border-color: rgba(124,106,255,0.6); }
+.menu-memo-cta:active { transform: scale(0.99); }
+.menu-cta-icon { font-size: 18px; flex-shrink: 0; }
+.menu-cta-arrow { margin-left: auto; font-size: 14px; color: var(--accent); }
+body.light .menu-memo-cta { background: rgba(124,106,255,0.1); border-color: rgba(124,106,255,0.3); }
+body.light .menu-memo-cta:hover { background: rgba(124,106,255,0.18); }
+.menu-memo-hint { font-size: 13px; color: var(--ink-dim); text-align: center; margin: 0; padding: 10px 0; }
+
+.menu-folders-lbl {
+  font-size: 22px; font-weight: 300; color: var(--ink);
+  letter-spacing: -0.01em; padding: 2px 0 0;
+}
+.menu-folders-lbl em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0 0 18px var(--cyan-glow); }
+
+/* Folder memo card slot (fixed above set scroll) */
+.menu-folder-memo {
+  width: 100%; max-width: 480px;
+  padding: 0 20px 10px; flex-shrink: 0;
+}
+
+/* Scrollable folder/set grid area */
+.menu-grid-scroll {
+  width: 100%; max-width: 480px;
+  max-height: 55dvh; overflow-y: auto;
+  padding: 0 20px;
+}
+.menu-grid-scroll .set-grid { padding: 0 0 8px; }
+
+/* Bottom bar — normal flow, sits right below grid */
+.menu-bottom-bar {
+  width: 100%; max-width: 480px;
+  padding: 8px 20px 32px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.menu-bottom-btn {
+  width: 100%; padding: 14px 20px;
+  background: transparent; border: 1.5px dashed var(--glass-border);
+  border-radius: var(--radius); color: var(--ink-dim);
+  font-family: 'Space Mono', monospace; font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer; text-align: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+}
+.menu-bottom-btn:hover { background: rgba(124,106,255,0.06); border-color: rgba(124,106,255,0.45); color: var(--accent); }
+.menu-bottom-btn:active { transform: scale(0.98); }
+.menu-bottom-btn.ghost { border-style: solid; border-color: transparent; color: var(--ink-faint); }
+.menu-bottom-btn.ghost:hover { background: rgba(255,255,255,0.04); color: var(--ink-dim); border-color: transparent; }
+
 /* Folder entry button */
 .folder-memo-card {
   display: flex; align-items: center; gap: 14px;
@@ -1180,14 +1272,6 @@ body.light .folder-count-badge { background: rgba(255,255,255,0.5); }
 .folder-memo-label { font-size: 15px; font-weight: 500; color: var(--ink); }
 .folder-memo-sub { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
 
-/* Memo top bar */
-.memo-topbar {
-  width: 100%; max-width: 480px; padding: 16px 20px 0;
-  display: flex; align-items: center; gap: 12px; flex-shrink: 0; position: relative; z-index: 10;
-}
-.memo-progress-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.memo-progress-track { width: 100%; height: 3px; background: var(--glass-border); border-radius: 2px; overflow: hidden; }
-.memo-progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
 .memo-progress-text { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--ink-dim); text-align: center; }
 
 /* Memo inner layout */
@@ -1208,46 +1292,7 @@ body.light .folder-count-badge { background: rgba(255,255,255,0.5); }
 .box-4 { background: rgba(0,212,255,0.14);   color: var(--cyan);   border: 1px solid rgba(0,212,255,0.3); }
 .box-5 { background: rgba(0,229,160,0.14);   color: var(--green);  border: 1px solid rgba(0,229,160,0.3); }
 
-/* Memo card */
-.memo-card {
-  background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
-  border-radius: var(--radius); padding: 24px 22px; min-height: 110px;
-  display: flex; flex-direction: column; gap: 6px; position: relative;
-}
-.memo-card::before {
-  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(124,106,255,0.04) 0%, transparent 60%);
-  pointer-events: none;
-}
-.memo-prompt-lbl {
-  font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.22em;
-  text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
-}
-.memo-prompt-word { font-size: 26px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; line-height: 1.2; }
-.memo-prompt-sub  { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
-
-/* Input row */
-.memo-input-row { display: flex; flex-direction: column; gap: 8px; }
-.memo-input {
-  width: 100%; padding: 14px 16px; font-size: 20px;
-  background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius);
-  color: var(--ink); outline: none; font-family: 'Noto Serif KR', serif;
-  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
-}
-.memo-input::placeholder { color: var(--ink-faint); font-size: 16px; font-family: 'Inter', sans-serif; }
-.memo-input:focus  { border-color: rgba(124,106,255,0.5); box-shadow: 0 0 0 3px rgba(124,106,255,0.1); background: rgba(124,106,255,0.05); }
-.memo-input.correct { border-color: rgba(0,229,160,0.6);  box-shadow: 0 0 0 3px rgba(0,229,160,0.1), 0 0 20px rgba(0,229,160,0.1); background: rgba(0,229,160,0.05); }
-.memo-input.wrong   { border-color: rgba(255,79,110,0.6);  box-shadow: 0 0 0 3px rgba(255,79,110,0.1), 0 0 20px rgba(255,79,110,0.1); background: rgba(255,79,110,0.05); }
-.memo-submit {
-  width: 100%; padding: 13px; border-radius: var(--radius);
-  background: rgba(124,106,255,0.18); border: 1px solid rgba(124,106,255,0.3);
-  color: var(--accent); font-size: 14px; font-weight: 500; cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s;
-}
-.memo-submit:hover { background: rgba(124,106,255,0.28); box-shadow: 0 0 16px var(--accent-glow); }
-
 /* Feedback */
-.memo-feedback { min-height: 56px; }
 .memo-fb-correct { display: flex; align-items: center; gap: 10px; }
 .memo-fb-icon { font-size: 18px; color: var(--green); text-shadow: 0 0 10px var(--green-glow); }
 .memo-fb-correct span:last-child { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--green); text-transform: uppercase; text-shadow: 0 0 10px var(--green-glow); }
@@ -1255,15 +1300,6 @@ body.light .folder-count-badge { background: rgba(255,255,255,0.5); }
 .memo-fb-answer { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 600; color: var(--ink); }
 .memo-fb-phrase { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
 .memo-fb-reset  { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-top: 6px; opacity: 0.8; }
-
-/* Next button */
-.memo-next {
-  width: 100%; padding: 14px; border-radius: var(--radius);
-  background: rgba(124,106,255,0.14); border: 1px solid rgba(124,106,255,0.25);
-  color: var(--ink); font-size: 15px; cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s;
-}
-.memo-next:hover { background: rgba(124,106,255,0.22); box-shadow: 0 0 16px var(--accent-glow); }
 
 /* Results page */
 .memo-results-wrap {
@@ -1312,10 +1348,5 @@ body.light .folder-count-badge { background: rgba(255,255,255,0.5); }
 /* Light theme */
 body.light .folder-memo-card { background: rgba(124,106,255,0.08); border-color: rgba(124,106,255,0.2); }
 body.light .folder-memo-card:hover { background: rgba(124,106,255,0.14); }
-body.light .memo-card { background: rgba(255,255,255,0.75); }
-body.light .memo-input { background: rgba(255,255,255,0.8); color: var(--ink); }
-body.light .memo-input:focus  { background: rgba(255,255,255,0.95); }
-body.light .memo-input.correct { background: rgba(10,124,92,0.06); }
-body.light .memo-input.wrong   { background: rgba(214,48,80,0.06); }
 body.light .memo-dir-opt { background: rgba(255,255,255,0.6); }
 body.light .memo-results-stats { background: rgba(255,255,255,0.7); }

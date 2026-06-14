@@ -19,11 +19,50 @@
     <button class="icon-btn" id="menuAuthBtn" title="Sign in to sync sets">↑ Sign in</button>
     <button class="icon-btn" id="menuThemeBtn" onclick="toggleTheme()">☀️</button>
   </div>
-  <div class="menu-header">
-    <div class="menu-label" id="menuLabel">한국어 · Flashcards</div>
-    <h1 class="menu-h1" id="menuH1">Choose a <em>folder</em></h1>
+
+  <!-- Folder list view: stats + memo CTA + label -->
+  <div class="menu-list-header" id="menuListHeader">
+    <div class="menu-stats-wrap" id="menuStatsWrap" style="display:none">
+      <div class="menu-stat-item">
+        <span class="menu-stat-num cyan" id="menuStatToday">0</span>
+        <span class="menu-stat-lbl">today</span>
+      </div>
+      <div class="menu-stat-div"></div>
+      <div class="menu-stat-item">
+        <span class="menu-stat-num" id="menuStatTotal">0</span>
+        <span class="menu-stat-lbl">all time</span>
+      </div>
+      <div class="menu-stat-div"></div>
+      <div class="menu-stat-item">
+        <span class="menu-stat-num green" id="menuStatBox5">0</span>
+        <span class="menu-stat-lbl">memorized</span>
+      </div>
+    </div>
+    <button class="menu-memo-cta" id="menuMemoCta" style="display:none">
+      <span class="menu-cta-icon">🧠</span>
+      <span id="menuMemoCtaLabel">Continue learning</span>
+      <span class="menu-cta-arrow">›</span>
+    </button>
+    <p class="menu-memo-hint" id="menuMemoHint" style="display:none">Choose a folder below to start learning</p>
+    <div class="menu-folders-lbl">Choose a <em>folder</em></div>
   </div>
-  <div class="set-grid" id="setGrid"></div>
+
+  <!-- Folder contents view: folder name header -->
+  <div class="menu-header" id="menuFolderHeader" style="display:none">
+    <div class="menu-label" id="menuLabel">Folder</div>
+    <h1 class="menu-h1" id="menuH1"></h1>
+  </div>
+
+  <!-- Folder memo card (fixed above set list) -->
+  <div class="menu-folder-memo" id="menuFolderMemo" style="display:none"></div>
+
+  <!-- Scrollable grid -->
+  <div class="menu-grid-scroll" id="menuGridScroll">
+    <div class="set-grid" id="setGrid"></div>
+  </div>
+
+  <!-- Fixed bottom bar -->
+  <div class="menu-bottom-bar" id="menuBottomBar" style="display:none"></div>
 </div>
 
 <!-- ══════════════ PRACTICE NAV ══════════════ -->
@@ -238,31 +277,34 @@
 
 <!-- ══════════════ MEMO SESSION PAGE ══════════════ -->
 <div class="page" id="pageMemo">
-  <div class="memo-topbar">
-    <button class="icon-btn" onclick="memoBackToFolder()">← Back</button>
-    <div class="memo-progress-wrap">
-      <div class="memo-progress-track">
-        <div class="memo-progress-fill" id="memoProgressBar" style="width:0%"></div>
+  <div class="pg-header">
+    <div class="pg-header-top">
+      <button class="icon-btn" onclick="memoBackToFolder()">← Back</button>
+      <div style="display:flex;gap:8px">
+        <button class="icon-btn" onclick="openMemoMidSettings()" title="Settings">⚙</button>
+        <button class="icon-btn" id="memoThemeBtn" onclick="toggleTheme()">☀️</button>
       </div>
-      <div class="memo-progress-text" id="memoProgressText">0 / 0</div>
     </div>
-    <div style="width:44px"></div>
+    <div class="test-progress-bar" style="margin-top:10px">
+      <div class="test-progress-fill" id="memoProgressBar" style="width:0%"></div>
+    </div>
+    <div class="memo-progress-text" id="memoProgressText">0 / 0</div>
   </div>
   <div class="memo-inner" id="memoInner">
     <div class="memo-box-badge box-1" id="memoBoxBadge">Box 1</div>
-    <div class="memo-card">
-      <div class="memo-prompt-lbl" id="memoPromptLbl">Type in Korean</div>
-      <div class="memo-prompt-word" id="memoPromptWord"></div>
-      <div class="memo-prompt-sub"  id="memoPromptSub"></div>
+    <div class="type-card">
+      <div class="type-prompt-lbl" id="memoPromptLbl">Type in Korean</div>
+      <div class="type-base-en" id="memoPromptWord"></div>
+      <div class="type-phrase-en" id="memoPromptSub"></div>
     </div>
-    <div class="memo-input-row">
-      <input class="memo-input" id="memoInput" type="text"
+    <div class="type-input-row">
+      <input class="type-input" id="memoInput" type="text"
              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
              placeholder="Type answer…">
-      <button class="memo-submit" id="memoSubmitBtn" onclick="memoCheck()">Check</button>
+      <button class="type-submit" id="memoSubmitBtn" onclick="memoCheck()">Check</button>
     </div>
-    <div class="memo-feedback" id="memoFeedback"></div>
-    <button class="memo-next" id="memoNextBtn" onclick="memoNext()" style="display:none">Next →</button>
+    <div class="type-feedback" id="memoFeedback"></div>
+    <button class="test-next-btn" id="memoNextBtn" onclick="memoNext()" style="display:none">Next →</button>
   </div>
 </div>
 
@@ -293,14 +335,28 @@
       <div class="create-field-lbl" style="margin-top:16px">Words per session</div>
       <input class="pi-key-input" id="memoSessionSize" type="number" value="20" min="1" max="200" style="width:100px">
       <div id="memoSetupImportRow" style="display:none">
-        <div class="create-field-lbl" style="margin-top:16px">Starting point</div>
+        <div class="create-field-lbl">Starting point</div>
         <select class="pi-key-input" id="memoImportFrom" style="width:100%">
           <option value="progress">Import known words from sets (→ Box 2)</option>
           <option value="zero">Start all from Box 1</option>
         </select>
       </div>
-      <button class="pi-btn" onclick="memoSetupConfirm()" style="margin-top:20px">Start →</button>
+      <button class="pi-btn" id="memoSaveBtn" onclick="memoSetupConfirmOrWarn()" style="margin-top:20px">Start →</button>
       <button class="pi-btn-ghost" onclick="closeMemoSetupModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MEMO RESET CONFIRM ══════════════ -->
+<div class="pi-overlay hidden" id="memoResetConfirmOverlay">
+  <div class="pi-modal" style="max-width:320px">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">⚠ Reset session?</div>
+    </div>
+    <div class="pi-body">
+      <p style="font-size:14px;color:var(--ink-dim);line-height:1.6;margin:0 0 20px">Current session progress will be lost. Continue with new settings?</p>
+      <button class="pi-btn" onclick="memoConfirmResetSession()">Yes, restart</button>
+      <button class="pi-btn-ghost" onclick="memoHideSettingsWarning()">Cancel</button>
     </div>
   </div>
 </div>

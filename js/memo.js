@@ -4,14 +4,18 @@
 // Box intervals (days until next review after correct answer):
 const MEMO_BOX_DAYS = [0, 1, 3, 7, 14, 30]; // index = box number
 
-let memoFolderId  = null;
-let memoQueue     = [];    // [{setId, wordIndex, word, wordKey}]
-let memoQIdx      = 0;
-let memoCards     = {};    // wordKey → {box, next_due, archived}
-let memoSettings  = null;  // {direction, sessionSize}
-let memoResult    = { correct: 0, resetCount: 0, archived: 0 };
-let memoAnswered  = false;
-let memoReinserted = new Set(); // prevent infinite reinsertion
+let memoFolderId     = null;
+let memoQueue        = [];   // [{setId, wordIndex, word, wordKey}]
+let memoQIdx         = 0;
+let memoCards        = {};   // wordKey → {box, next_due, archived}
+let memoSettings     = null; // {direction, sessionSize}
+let memoResult       = { correct: 0, resetCount: 0, archived: 0 };
+let memoAnswered     = false;
+let memoReinserted   = new Set();
+let memoTodayCount    = 0;
+let memoTotalCorrect  = 0;
+let memoBoxFiveCount  = 0;
+let memoSessionActive = false;
 
 // ── HELPERS ─────────────────────────────────────────────────────
 
@@ -100,14 +104,90 @@ async function memoBulkInsert(folderId, rows) {
   }
 }
 
+// ── STATS ─────────────────────────────────────────────────────────
+
+function memoSaveLastSession(correct, missed) {
+  localStorage.setItem('memo_last_session', JSON.stringify({ correct, missed }));
+}
+
+function memoLoadTodayCount() {
+  try {
+    const raw = localStorage.getItem('memo_today');
+    if (!raw) { memoTodayCount = 0; return; }
+    const { date, count } = JSON.parse(raw);
+    memoTodayCount = date === memoToday() ? (count || 0) : 0;
+  } catch { memoTodayCount = 0; }
+}
+
+function memoUpdateTodayCount(n) {
+  if (!n) return;
+  memoLoadTodayCount();
+  memoTodayCount += n;
+  localStorage.setItem('memo_today', JSON.stringify({ date: memoToday(), count: memoTodayCount }));
+}
+
+async function memoFetchUserStats() {
+  if (!sb || !currentUser) return;
+  const { data } = await sb
+    .from('user_stats')
+    .select('total_correct')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+  memoTotalCorrect = data?.total_correct || 0;
+}
+
+async function memoIncrementTotalCorrect(n) {
+  if (!sb || !currentUser || !n) return;
+  const { data, error } = await sb.rpc('add_correct', { delta: n });
+  if (error) { console.error('[memo] add_correct:', error.message); return; }
+  memoTotalCorrect = data || (memoTotalCorrect + n);
+}
+
+async function memoFetchBoxFiveCount() {
+  if (!sb || !currentUser) return;
+  const { count, error } = await sb
+    .from('memo_cards')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', currentUser.id)
+    .eq('box', 5)
+    .eq('archived', false);
+  if (error) { console.error('[memo] box5 count:', error.message); return; }
+  memoBoxFiveCount = count || 0;
+}
+
+function memoLoadLastSession() {
+  try {
+    const raw = localStorage.getItem('memo_last_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function memoGetFolderDisplayName(folderId) {
+  if (folderId === 'builtin') return 'Built-in';
+  if (folderId === 'starter') return 'Starter';
+  const f = getAllFolders().find(f => f.id === folderId);
+  return f ? f.name : 'Unknown folder';
+}
+
 // ── ENTRY POINT ─────────────────────────────────────────────────
 
 async function openMemoMode(folderId) {
-  if (!userIsSignedIn()) { alert('Sign in to use Memo mode.'); return; }
+  if (!userIsSignedIn()) return;
+  localStorage.setItem('memo_last_folder', folderId);
 
   memoFolderId = folderId;
   const allWords = memoGetAllWords(folderId);
-  if (!allWords.length) { alert('No words in this folder.'); return; }
+  if (!allWords.length) {
+    showMemoPage('pageMemoResults');
+    document.getElementById('memoResultsContent').innerHTML = `
+      <div class="memo-done-emoji">📭</div>
+      <div class="memo-done-title">No words <em>yet!</em></div>
+      <div class="memo-done-sub">Add words to a set in this folder first, then come back.</div>
+      <div class="memo-results-actions">
+        <button class="memo-action-btn ghost" onclick="memoBackToFolder()">← Go back</button>
+      </div>`;
+    return;
+  }
 
   memoCards    = await memoFetchCards(folderId);
 
@@ -134,10 +214,35 @@ function openMemoSetupModal(isFirstTime) {
   document.getElementById('memoSessionSize').value = s.sessionSize || 20;
   const importEl = document.getElementById('memoImportFrom');
   if (importEl) importEl.value = 'progress';
+  const saveBtn = document.getElementById('memoSaveBtn');
+  if (saveBtn) saveBtn.textContent = isFirstTime ? 'Start →' : 'Save →';
+}
+
+function openMemoMidSettings() {
+  openMemoSetupModal(false);
 }
 
 function closeMemoSetupModal() {
   document.getElementById('memoSetupOverlay').classList.add('hidden');
+}
+
+function memoSetupConfirmOrWarn() {
+  if (memoSessionActive) {
+    document.getElementById('memoSetupOverlay').classList.add('hidden');
+    document.getElementById('memoResetConfirmOverlay').classList.remove('hidden');
+  } else {
+    memoSetupConfirm();
+  }
+}
+
+function memoConfirmResetSession() {
+  document.getElementById('memoResetConfirmOverlay').classList.add('hidden');
+  memoSetupConfirm();
+}
+
+function memoHideSettingsWarning() {
+  document.getElementById('memoResetConfirmOverlay').classList.add('hidden');
+  document.getElementById('memoSetupOverlay').classList.remove('hidden');
 }
 
 async function memoSetupConfirm() {
@@ -242,11 +347,13 @@ async function memoStartSession() {
   memoAnswered   = false;
   memoReinserted = new Set();
 
+  memoSessionActive = true;
   showMemoSessionPage();
   memoShowCard();
 }
 
 function memoShowNoCards() {
+  memoSessionActive = false;
   const today  = memoToday();
   const future = Object.values(memoCards)
     .filter(c => !c.archived && c.next_due > today)
@@ -326,7 +433,7 @@ function memoShowCard() {
   }
 
   const inp = document.getElementById('memoInput');
-  inp.value = ''; inp.className = 'memo-input'; inp.disabled = false;
+  inp.value = ''; inp.className = 'type-input'; inp.disabled = false;
   document.getElementById('memoFeedback').innerHTML         = '';
   document.getElementById('memoSubmitBtn').style.display    = '';
   document.getElementById('memoNextBtn').style.display      = 'none';
@@ -353,9 +460,9 @@ async function memoCheck() {
     : val.toLowerCase() === (w.baseEn || '').toLowerCase();
 
   inp.disabled  = true;
-  inp.className = 'memo-input ' + (correct ? 'correct' : 'wrong');
+  inp.className = 'type-input ' + (correct ? 'correct' : 'wrong');
   document.getElementById('memoSubmitBtn').style.display = 'none';
-  document.getElementById('memoNextBtn').style.display   = '';
+  document.getElementById('memoNextBtn').style.display   = 'block';
 
   const fb = document.getElementById('memoFeedback');
 
@@ -415,7 +522,14 @@ function memoNext() { memoShowCard(); }
 // ── RESULTS ─────────────────────────────────────────────────────
 
 function memoShowResults() {
+  memoSessionActive = false;
   showMemoPage('pageMemoResults');
+  memoSaveLastSession(memoResult.correct, memoResult.resetCount);
+  if (memoResult.correct > 0) {
+    memoUpdateTodayCount(memoResult.correct);
+    memoIncrementTotalCorrect(memoResult.correct);
+  }
+  memoFetchBoxFiveCount();
   const total = memoResult.correct + memoResult.resetCount;
   const pct   = total > 0 ? Math.round(memoResult.correct / total * 100) : 100;
   const archivedRow = memoResult.archived
