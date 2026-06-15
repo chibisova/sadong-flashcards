@@ -158,6 +158,7 @@ Script load order: `data.js → sets.js → study.js → test.js → import.js �
 | `memo_last_folder` | Last folder opened in memo mode (drives Continue learning CTA) |
 | `memo_today` | `{ date, count }` — today's correct answer count (resets on date change) |
 | `kf_theme` | `"light"` or `"dark"` |
+| `kf_color_theme` | `"purple"` or `"sunlight"` — light mode color variant |
 | `gemini_api_key` | Gemini API key for photo import |
 | `openrouter_api_key` | OpenRouter API key for photo import |
 | `openrouter_model` | OpenRouter model ID |

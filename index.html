@@ -11,13 +11,20 @@
 </head>
 <body>
 
+<canvas id="starCanvas"></canvas>
+
 <!-- ══════════════ MENU PAGE ══════════════ -->
 <div class="page active" id="pageMenu">
   <div class="menu-topbar">
-    <button class="icon-btn" id="folderBackBtn" onclick="showFolderList()" style="display:none;margin-right:auto">← Back</button>
-    <button class="icon-btn" id="menuShareBtn" onclick="openFolderShareModal()" style="display:none" title="Share folder">🔗</button>
-    <button class="icon-btn" id="menuAuthBtn" title="Sign in to sync sets">↑ Sign in</button>
-    <button class="icon-btn" id="menuThemeBtn" onclick="toggleTheme()">☀️</button>
+    <div class="menu-topbar-left">
+      <button class="icon-btn" id="folderBackBtn" onclick="showFolderList()" style="display:none">← Back</button>
+      <div class="menu-greeting" id="menuGreeting">Korean Flashcards</div>
+    </div>
+    <div class="menu-topbar-right">
+      <button class="icon-btn" id="menuShareBtn" onclick="openFolderShareModal()" style="display:none" title="Share folder">🔗</button>
+      <button class="icon-btn" id="menuThemeBtn" onclick="toggleTheme()">☀️</button>
+      <button class="icon-btn" id="menuSettingsBtn" onclick="openSettingsModal()" title="Settings">⚙️</button>
+    </div>
   </div>
 
   <!-- Folder list view: stats + memo CTA + label -->
@@ -560,6 +567,76 @@
         <button class="pi-btn folder-delete-confirm-btn" onclick="executeFolderDelete()">Delete →</button>
         <button class="pi-btn-ghost" onclick="closeFolderDeleteModal()">Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SETTINGS MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="settingsOverlay" onclick="if(event.target===this)closeSettingsModal()">
+  <div class="pi-modal" style="max-width:340px">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Settings</div>
+      <button class="pi-close" onclick="closeSettingsModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <div class="settings-section">
+        <div class="settings-section-lbl">Account</div>
+        <div id="settingsSignedIn" style="display:none">
+          <p class="settings-email" id="settingsEmail"></p>
+          <button class="settings-signout-btn" onclick="openSignOutConfirm()">Sign out</button>
+        </div>
+        <div id="settingsSignedOut" style="display:none">
+          <button class="pi-btn" onclick="closeSettingsModal();openAuthModal()" style="width:100%">↑ Sign in / Sign up</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-lbl">Light theme color</div>
+        <div class="settings-theme-row">
+          <label class="settings-theme-opt" id="settingsOptPurple">
+            <input type="radio" name="colorTheme" value="purple" onchange="applyColorTheme('purple')">
+            <span class="settings-theme-swatch settings-swatch-purple"></span>
+            <span>Purple</span>
+          </label>
+          <label class="settings-theme-opt" id="settingsOptSunlight">
+            <input type="radio" name="colorTheme" value="sunlight" onchange="applyColorTheme('sunlight')">
+            <span class="settings-theme-swatch settings-swatch-sunlight"></span>
+            <span>Sunlight</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SIGN-OUT CONFIRM ══════════════ -->
+<div class="pi-overlay hidden" id="signOutConfirmOverlay">
+  <div class="pi-modal" style="max-width:320px">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Sign out</div>
+    </div>
+    <div class="pi-body">
+      <p style="margin:0 0 20px;color:var(--ink-dim);font-size:14px">Are you sure you want to sign out?</p>
+      <div style="display:flex;gap:10px">
+        <button class="pi-btn-ghost" onclick="closeSignOutConfirm()" style="flex:1">Cancel</button>
+        <button class="settings-signout-btn" onclick="executeSignOut()" style="flex:1">Sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FOLDER RENAME MODAL ══════════════ -->
+<div class="pi-overlay hidden" id="folderRenameOverlay" onclick="if(event.target===this)closeFolderRenameModal()">
+  <div class="pi-modal" style="max-width:340px">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Rename folder</div>
+      <button class="pi-close" onclick="closeFolderRenameModal()">✕</button>
+    </div>
+    <div class="pi-body">
+      <input class="pi-key-input" id="folderRenameInput" type="text" placeholder="Folder name"
+             style="width:100%;margin-bottom:16px"
+             onkeydown="if(event.key==='Enter')submitFolderRename()">
+      <button class="pi-btn" onclick="submitFolderRename()">Save →</button>
+      <button class="pi-btn-ghost" onclick="closeFolderRenameModal()">Cancel</button>
     </div>
   </div>
 </div>

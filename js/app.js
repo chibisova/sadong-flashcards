@@ -44,6 +44,31 @@ function toggleTheme() {
   localStorage.setItem('kf_theme', isLight ? 'light' : 'dark');
 }
 
+function applyColorTheme(theme) {
+  if (theme === 'sunlight') {
+    document.body.classList.add('sunlight');
+  } else {
+    document.body.classList.remove('sunlight');
+  }
+  localStorage.setItem('kf_color_theme', theme);
+  // Sync radio buttons
+  const purpleRadio   = document.querySelector('#settingsOptPurple input');
+  const sunlightRadio = document.querySelector('#settingsOptSunlight input');
+  if (purpleRadio)   purpleRadio.checked   = (theme !== 'sunlight');
+  if (sunlightRadio) sunlightRadio.checked = (theme === 'sunlight');
+}
+
+function openSettingsModal() {
+  const current = localStorage.getItem('kf_color_theme') || 'purple';
+  applyColorTheme(current);
+  if (typeof updateAuthUI === 'function') updateAuthUI();
+  document.getElementById('settingsOverlay').classList.remove('hidden');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settingsOverlay').classList.add('hidden');
+}
+
 // ═══════════════════════════════════════════════════════════════
 // MENU
 // ═══════════════════════════════════════════════════════════════
@@ -119,6 +144,7 @@ function renderFolderList() {
   _currentFolderContentsId = null;
   document.getElementById('folderBackBtn').style.display = 'none';
   document.getElementById('menuShareBtn').style.display  = 'none';
+  document.getElementById('menuGreeting').style.display  = '';
 
   // Switch header sections
   document.getElementById('menuListHeader').style.display   = '';
@@ -221,6 +247,7 @@ function openFolderContents(folderId) {
 
   document.getElementById('folderBackBtn').style.display = '';
   document.getElementById('menuShareBtn').style.display  = showShareBtn ? '' : 'none';
+  document.getElementById('menuGreeting').style.display  = 'none';
 
   // Switch header sections
   document.getElementById('menuListHeader').style.display   = 'none';
@@ -270,14 +297,29 @@ function userIsSignedIn() {
   return typeof currentUser !== 'undefined' && !!currentUser;
 }
 
+let _pendingRenameFolderId = null;
+
 function startRenameFolder(id) {
   const folder = getAllFolders().find(f => f.id === id);
   if (!folder) return;
-  const newName = prompt('Rename folder:', folder.name);
-  if (newName && newName.trim()) {
-    renameFolder(id, newName.trim());
-    renderFolderList();
-  }
+  _pendingRenameFolderId = id;
+  const inp = document.getElementById('folderRenameInput');
+  inp.value = folder.name;
+  document.getElementById('folderRenameOverlay').classList.remove('hidden');
+  setTimeout(() => inp.focus(), 60);
+}
+
+function closeFolderRenameModal() {
+  document.getElementById('folderRenameOverlay').classList.add('hidden');
+  _pendingRenameFolderId = null;
+}
+
+function submitFolderRename() {
+  const name = document.getElementById('folderRenameInput').value.trim();
+  if (!name || !_pendingRenameFolderId) return;
+  renameFolder(_pendingRenameFolderId, name);
+  closeFolderRenameModal();
+  renderFolderList();
 }
 
 let _pendingDeleteFolderId = null;
@@ -626,6 +668,73 @@ if (localStorage.getItem('kf_theme') === 'light' ||
     const el = document.getElementById(id); if (el) el.textContent = '🌙';
   });
 }
+if (localStorage.getItem('kf_color_theme') === 'sunlight') {
+  document.body.classList.add('sunlight');
+}
 
 showMenu();
 checkShareParam();
+
+// ═══════════════════════════════════════════════════════════════
+// STAR CANVAS
+// ═══════════════════════════════════════════════════════════════
+(function () {
+  const canvas = document.getElementById('starCanvas');
+  const ctx    = canvas.getContext('2d');
+  let stars    = [];
+  let raf      = null;
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function makeStars() {
+    const count = Math.floor((canvas.width * canvas.height) / 6000);
+    stars = Array.from({ length: count }, () => ({
+      x:     Math.random() * canvas.width,
+      y:     Math.random() * canvas.height,
+      r:     Math.random() * 0.8 + 0.3,
+      base:  Math.random() * 0.35 + 0.1,
+      speed: Math.random() * 0.0006 + 0.0002,
+      phase: Math.random() * Math.PI * 2,
+    }));
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const s of stars) {
+      const opacity = (s.base + s.base * Math.sin(t * s.speed + s.phase)) * 1.4;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${opacity})`;
+      ctx.fill();
+    }
+    raf = requestAnimationFrame(draw);
+  }
+
+  function start() {
+    if (raf) return;
+    resize();
+    makeStars();
+    raf = requestAnimationFrame(draw);
+  }
+
+  function stop() {
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  window.addEventListener('resize', () => {
+    resize();
+    makeStars();
+  });
+
+  if (!document.body.classList.contains('light')) start();
+
+  const _toggleTheme = window.toggleTheme;
+  window.toggleTheme = function () {
+    _toggleTheme();
+    document.body.classList.contains('light') ? stop() : start();
+  };
+})();

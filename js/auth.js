@@ -7,16 +7,6 @@ const sb = SUPABASE_READY
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
-document.getElementById('menuAuthBtn').addEventListener('click', () => {
-  if (!SUPABASE_READY) { alert('Configure js/config.js first.'); return; }
-  if (!currentUser) { openAuthModal(); return; }
-  // Wipe Supabase session + app data, then reload
-  Object.keys(localStorage)
-    .filter(k => k.startsWith('sb-'))
-    .forEach(k => localStorage.removeItem(k));
-  localStorage.removeItem('kf_custom_sets');
-  window.location.reload();
-});
 
 let currentUser = null;
 
@@ -50,25 +40,46 @@ if (sb) {
     updateAuthUI();
   });
 }
+updateAuthUI();  // initial render (before async getSession resolves)
 
 function updateAuthUI() {
-  const btn = document.getElementById('menuAuthBtn');
-  if (!btn) return;
+  const greeting    = document.getElementById('menuGreeting');
+  const signedInEl  = document.getElementById('settingsSignedIn');
+  const signedOutEl = document.getElementById('settingsSignedOut');
+  const emailEl     = document.getElementById('settingsEmail');
+
   if (currentUser) {
-    const short = currentUser.email.split('@')[0];
-    btn.textContent = short.length > 14 ? short.slice(0, 13) + '…' : short;
-    btn.title = currentUser.email + ' · click to sign out';
+    const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+    const short = name.length > 16 ? name.slice(0, 15) + '…' : name;
+    if (greeting) greeting.textContent = 'Hello, ' + short;
+    if (signedInEl)  signedInEl.style.display  = '';
+    if (signedOutEl) signedOutEl.style.display  = 'none';
+    if (emailEl)     emailEl.textContent         = currentUser.email;
   } else {
-    btn.textContent = '↑ Sign in';
-    btn.title = 'Sign in to sync sets across devices';
+    if (greeting) greeting.textContent = 'Korean Flashcards';
+    if (signedInEl)  signedInEl.style.display  = 'none';
+    if (signedOutEl) signedOutEl.style.display  = '';
   }
 }
 
-async function signOut() {
-  try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { console.error(e); }
+function openSignOutConfirm() {
+  document.getElementById('settingsOverlay').classList.add('hidden');
+  document.getElementById('signOutConfirmOverlay').classList.remove('hidden');
+}
+
+function closeSignOutConfirm() {
+  document.getElementById('signOutConfirmOverlay').classList.add('hidden');
+  document.getElementById('settingsOverlay').classList.remove('hidden');
+}
+
+function executeSignOut() {
+  document.getElementById('signOutConfirmOverlay').classList.add('hidden');
+  Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
   localStorage.removeItem('kf_custom_sets');
   window.location.reload();
 }
+
+function signOut() { executeSignOut(); }
 
 // ═══════════════════════════════════════════════════════════════
 // AUTH MODAL
