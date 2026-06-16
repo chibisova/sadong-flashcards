@@ -36,6 +36,7 @@ body {
 }
 body.light #starCanvas { display: none; }
 
+
 body::before {
   content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background:
@@ -132,6 +133,7 @@ body::after {
 }
 
 /* set card */
+
 .set-card {
   background: rgba(13,17,23,0.7); border: 1px solid var(--glass-border);
   border-radius: var(--radius); padding: 18px 20px;
@@ -490,7 +492,8 @@ h2 em { font-style: normal; font-weight: 500; color: var(--cyan); text-shadow: 0
 .type-submit:hover { background: rgba(124,106,255,0.25); box-shadow: 0 0 16px var(--accent-glow); }
 
 .type-feedback { min-height: 56px; margin-bottom: 8px; }
-.fb-correct { display: flex; align-items: center; gap: 10px; }
+.fb-correct { display: flex; flex-direction: column; gap: 5px; }
+.fb-correct-top { display: flex; align-items: center; gap: 10px; }
 .fb-correct-icon { font-size: 18px; }
 .fb-correct-text { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--green); text-transform: uppercase; text-shadow: 0 0 10px var(--green-glow); }
 .fb-wrong-lbl { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--red); margin-bottom: 5px; text-shadow: 0 0 8px var(--red-glow); }
@@ -1485,12 +1488,14 @@ body.light .menu-stats-wrap { background: rgba(255,255,255,0.6); }
 .box-5 { background: rgba(0,229,160,0.14);   color: var(--green);  border: 1px solid rgba(0,229,160,0.3); }
 
 /* Feedback */
-.memo-fb-correct { display: flex; align-items: center; gap: 10px; }
+.memo-fb-correct { display: flex; flex-direction: column; gap: 5px; }
+.memo-fb-correct-top { display: flex; align-items: center; gap: 10px; }
 .memo-fb-icon { font-size: 18px; color: var(--green); text-shadow: 0 0 10px var(--green-glow); }
-.memo-fb-correct span:last-child { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--green); text-transform: uppercase; text-shadow: 0 0 10px var(--green-glow); }
+.memo-fb-correct-top span:last-child { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--green); text-transform: uppercase; text-shadow: 0 0 10px var(--green-glow); }
 .memo-fb-wrong-lbl { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--red); margin-bottom: 5px; text-shadow: 0 0 8px var(--red-glow); }
 .memo-fb-answer { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 600; color: var(--ink); }
-.memo-fb-phrase { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+.memo-fb-phrase-ko { font-family: 'Noto Serif KR', serif; font-size: 13px; color: var(--ink); margin-top: 4px; }
+.memo-fb-phrase-en { font-size: 11px; color: var(--ink-dim); margin-top: 1px; }
 .memo-fb-reset  { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-top: 6px; opacity: 0.8; }
 
 /* Results page */

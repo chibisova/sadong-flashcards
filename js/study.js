@@ -294,7 +294,7 @@ const T = {
       const mastered = streak >= NEEDED_STREAK;
       const dots = document.getElementById('t-dots').querySelectorAll('.sdot');
       if (dots[streak - 1]) dots[streak - 1].classList.add('on');
-      fb.innerHTML = `<div class="fb-correct"><span class="fb-correct-icon">✓</span><span class="fb-correct-text">${mastered ? 'Mastered! ★' : `Correct! ${streak}/${NEEDED_STREAK}`}</span></div>`;
+      fb.innerHTML = `<div class="fb-correct"><div class="fb-correct-top"><span class="fb-correct-icon">✓</span><span class="fb-correct-text">${mastered ? 'Mastered! ★' : `Correct! ${streak}/${NEEDED_STREAK}`}</span></div>${w.phraseKo ? `<div class="memo-fb-phrase-ko">${escHtml(w.phraseKo)}</div>` : ''}</div>`;
       gsap.fromTo(fb.firstElementChild, { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.32, ease: 'back.out(2.4)', clearProps: 'all' });
       if (mastered) {
         this.known.add(idx);
@@ -309,7 +309,7 @@ const T = {
         <div>
           <div class="fb-wrong-lbl">Correct answer</div>
           <div class="fb-answer">${hl(w.sadong, w.suffix)}</div>
-          <div class="fb-phrase">${w.phraseKo}</div>
+          ${w.phraseKo ? `<div class="memo-fb-phrase-ko">${escHtml(w.phraseKo)}</div>` : ''}
         </div>`;
       gsap.fromTo(fb.firstElementChild, { x: 0 }, { keyframes: { x: [-9, 9, -6, 6, -3, 3, 0] }, duration: 0.38, ease: 'none', clearProps: 'all' });
       gsap.fromTo(inp, { x: 0 }, { keyframes: { x: [-7, 7, -5, 5, 0] }, duration: 0.3, ease: 'none', clearProps: 'all' });

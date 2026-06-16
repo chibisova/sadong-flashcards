@@ -466,6 +466,10 @@ async function memoCheck() {
 
   const fb = document.getElementById('memoFeedback');
 
+  const sentenceHtml = dir === 'en-ko'
+    ? (w.phraseKo ? `<div class="memo-fb-phrase-ko">${escHtml(w.phraseKo)}</div>` : '')
+    : (w.phraseEn ? `<div class="memo-fb-phrase-en">${escHtml(w.phraseEn)}</div>` : '');
+
   if (correct) {
     memoResult.correct++;
     if (card.box >= 5) {
@@ -473,13 +477,21 @@ async function memoCheck() {
       memoCards[item.wordKey] = { box: 5, next_due: memoAddDays(30), archived: true };
       memoResult.archived++;
       await memoUpsertCard(memoFolderId, item.wordKey, 5, memoAddDays(30), true);
-      fb.innerHTML = `<div class="memo-fb-correct"><span class="memo-fb-icon">★</span><span>Learned! Word archived.</span></div>`;
+      fb.innerHTML = `
+        <div class="memo-fb-correct">
+          <div class="memo-fb-correct-top"><span class="memo-fb-icon">★</span><span>Learned! Word archived.</span></div>
+          ${sentenceHtml}
+        </div>`;
     } else {
       const newBox  = card.box + 1;
       const nextDue = memoAddDays(MEMO_BOX_DAYS[newBox]);
       memoCards[item.wordKey] = { box: newBox, next_due: nextDue, archived: false };
       await memoUpsertCard(memoFolderId, item.wordKey, newBox, nextDue, false);
-      fb.innerHTML = `<div class="memo-fb-correct"><span class="memo-fb-icon">✓</span><span>Box ${card.box} → Box ${newBox}</span></div>`;
+      fb.innerHTML = `
+        <div class="memo-fb-correct">
+          <div class="memo-fb-correct-top"><span class="memo-fb-icon">✓</span><span>Box ${card.box} → Box ${newBox}</span></div>
+          ${sentenceHtml}
+        </div>`;
     }
     gsap.fromTo(fb.firstElementChild, { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.32, ease: 'back.out(2.4)', clearProps: 'all' });
   } else {
@@ -491,15 +503,12 @@ async function memoCheck() {
     const answerHtml = dir === 'en-ko'
       ? hl(w.sadong, w.suffix)
       : escHtml(w.baseEn || '');
-    const subtext = dir === 'en-ko'
-      ? escHtml(w.phraseKo || '')
-      : escHtml(w.phraseEn || '');
 
     fb.innerHTML = `
       <div class="memo-fb-wrong">
         <div class="memo-fb-wrong-lbl">Correct answer</div>
         <div class="memo-fb-answer">${answerHtml}</div>
-        ${subtext ? `<div class="memo-fb-phrase">${subtext}</div>` : ''}
+        ${sentenceHtml}
         <div class="memo-fb-reset">↩ Reset to Box 1</div>
       </div>`;
     gsap.fromTo(fb.firstElementChild, { x: 0 }, { keyframes: { x: [-9,9,-6,6,-3,3,0] }, duration: 0.38, ease: 'none', clearProps: 'all' });
