@@ -17,6 +17,9 @@ if (sb) {
   sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session?.user || null;
     updateAuthUI();
+    if (event === 'INITIAL_SESSION' && currentUser && typeof renderSetGrid === 'function') {
+      renderSetGrid();
+    }
     if (event === 'SIGNED_IN') {
       try { await syncFolders();           } catch (err) { console.error('[auth] syncFolders error:', err.message); }
       try { await syncSets();              } catch (err) { console.error('[auth] syncSets error:',   err.message); }
@@ -35,10 +38,6 @@ if (sb) {
     }
   });
 
-  sb.auth.getSession().then(({ data: { session } }) => {
-    currentUser = session?.user || null;
-    updateAuthUI();
-  });
 }
 updateAuthUI();  // initial render (before async getSession resolves)
 

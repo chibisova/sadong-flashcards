@@ -64,26 +64,70 @@ function memoSaveSettings(folderId, settings) {
   localStorage.setItem('memo_' + folderId + '_settings', JSON.stringify(settings));
 }
 
+// ── LOCAL CACHE ──────────────────────────────────────────────────
+
+function memoCardsCache_key(folderId) { return 'memo_cards_cache_' + folderId; }
+
+function memoCardsCache_save(folderId, map) {
+  try { localStorage.setItem(memoCardsCache_key(folderId), JSON.stringify({ ts: Date.now(), cards: map })); } catch {}
+}
+
+function memoCardsCache_load(folderId) {
+  try {
+    const raw = localStorage.getItem(memoCardsCache_key(folderId));
+    if (!raw) return null;
+    const { ts, cards } = JSON.parse(raw);
+    if (Date.now() - ts > 7 * 24 * 60 * 60 * 1000) return null; // 7-day TTL
+    return cards;
+  } catch { return null; }
+}
+
+function memoCardsCache_patch(folderId, wordKey, box, nextDue, archived) {
+  try {
+    const cached = memoCardsCache_load(folderId) || {};
+    cached[wordKey] = { box, next_due: nextDue, archived: archived || false };
+    memoCardsCache_save(folderId, cached);
+  } catch {}
+}
+
 // ── SUPABASE ─────────────────────────────────────────────────────
 
 async function memoFetchCards(folderId) {
+  // Fast path: local cache
+  const cached = memoCardsCache_load(folderId);
+  if (cached) return cached;
+
+  // Slow path: fetch from DB, save to cache
   if (!sb || !currentUser) return {};
-  const { data, error } = await sb
-    .from('memo_cards')
-    .select('word_key, box, next_due, archived')
-    .eq('user_id', currentUser.id)
-    .eq('folder_local_id', folderId);
+  let data, error;
+  try {
+    const result = await Promise.race([
+      sb.from('memo_cards')
+        .select('word_key, box, next_due, archived')
+        .eq('user_id', currentUser.id)
+        .eq('folder_local_id', folderId),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+    ]);
+    data = result.data; error = result.error;
+  } catch (e) {
+    console.error('[memo] fetch timeout:', e.message);
+    return {};
+  }
   if (error) { console.error('[memo] fetch:', error.message); return {}; }
   const map = {};
   (data || []).forEach(r => {
     map[r.word_key] = { box: r.box, next_due: r.next_due, archived: r.archived };
   });
+  memoCardsCache_save(folderId, map);
   return map;
 }
 
-async function memoUpsertCard(folderId, wordKey, box, nextDue, archived) {
+function memoUpsertCard(folderId, wordKey, box, nextDue, archived) {
+  // Update cache immediately (sync)
+  memoCardsCache_patch(folderId, wordKey, box, nextDue, archived);
+  // Save to DB in background
   if (!sb || !currentUser) return;
-  const { error } = await sb.from('memo_cards').upsert({
+  sb.from('memo_cards').upsert({
     user_id:         currentUser.id,
     folder_local_id: folderId,
     word_key:        wordKey,
@@ -91,16 +135,24 @@ async function memoUpsertCard(folderId, wordKey, box, nextDue, archived) {
     next_due:        nextDue,
     archived:        archived || false,
     updated_at:      new Date().toISOString(),
-  }, { onConflict: 'user_id,folder_local_id,word_key' });
-  if (error) console.error('[memo] upsert:', error.message);
+  }, { onConflict: 'user_id,folder_local_id,word_key' })
+    .then(({ error }) => { if (error) console.error('[memo] upsert:', error.message); })
+    .catch(e => console.error('[memo] upsert:', e.message));
 }
 
 async function memoBulkInsert(folderId, rows) {
   if (!sb || !currentUser || !rows.length) return;
   const batchSize = 100;
   for (let i = 0; i < rows.length; i += batchSize) {
-    const { error } = await sb.from('memo_cards').insert(rows.slice(i, i + batchSize));
-    if (error) console.error('[memo] bulk insert:', error.message);
+    try {
+      const { error } = await Promise.race([
+        sb.from('memo_cards').insert(rows.slice(i, i + batchSize)),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+      ]);
+      if (error) console.error('[memo] bulk insert:', error.message);
+    } catch (e) {
+      console.error('[memo] bulk insert error/timeout:', e.message);
+    }
   }
 }
 
@@ -169,9 +221,32 @@ function memoGetFolderDisplayName(folderId) {
   return f ? f.name : 'Unknown folder';
 }
 
+// ── LEAVE CONFIRM ────────────────────────────────────────────────
+
+function memoRequestLeave() {
+  if (memoSessionActive) {
+    document.getElementById('memoLeaveConfirmOverlay').classList.remove('hidden');
+  } else {
+    memoBackToFolder();
+  }
+}
+
+function memoLeaveConfirmYes() {
+  document.getElementById('memoLeaveConfirmOverlay').classList.add('hidden');
+  memoShowResults();
+}
+
+function memoLeaveConfirmNo() {
+  document.getElementById('memoLeaveConfirmOverlay').classList.add('hidden');
+}
+
 // ── ENTRY POINT ─────────────────────────────────────────────────
 
 async function openMemoMode(folderId) {
+  if (!userIsSignedIn() && sb) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) { currentUser = session.user; updateAuthUI(); }
+  }
   if (!userIsSignedIn()) return;
   localStorage.setItem('memo_last_folder', folderId);
 
@@ -189,7 +264,9 @@ async function openMemoMode(folderId) {
     return;
   }
 
+  document.getElementById('memoLoadingOverlay').classList.remove('hidden');
   memoCards    = await memoFetchCards(folderId);
+  document.getElementById('memoLoadingOverlay').classList.add('hidden');
 
   memoSettings = memoLoadSettings(folderId);
   const isFirstTime = Object.keys(memoCards).length === 0;
@@ -256,17 +333,17 @@ async function memoSetupConfirm() {
 
   memoSettings = { direction, sessionSize };
   memoSaveSettings(memoFolderId, memoSettings);
-  closeMemoSetupModal();
 
   if (isFirstTime) {
-    await memoInitFirstTime(memoFolderId, importMode);
-    memoCards = await memoFetchCards(memoFolderId);
+    memoInitFirstTime(memoFolderId, importMode);           // sync: populates cache instantly
+    memoCards = memoCardsCache_load(memoFolderId) || {};   // read it back
   }
 
+  closeMemoSetupModal();
   await memoStartSession();
 }
 
-async function memoInitFirstTime(folderId, importMode) {
+function memoInitFirstTime(folderId, importMode) {
   const allWords = memoGetAllWords(folderId);
   const today    = memoToday();
   const rows     = [];
@@ -283,33 +360,28 @@ async function memoInitFirstTime(folderId, importMode) {
     });
     allWords.forEach(({ wordKey }) => {
       const isKnown = knownKeys.has(wordKey);
-      rows.push({
-        user_id:         currentUser.id,
-        folder_local_id: folderId,
-        word_key:        wordKey,
-        box:             isKnown ? 2 : 1,
-        next_due:        isKnown ? memoAddDays(3) : today,
-        archived:        false,
-        created_at:      new Date().toISOString(),
-        updated_at:      new Date().toISOString(),
-      });
+      rows.push({ word_key: wordKey, box: isKnown ? 2 : 1, next_due: isKnown ? memoAddDays(3) : today, archived: false });
     });
   } else {
     allWords.forEach(({ wordKey }) => {
-      rows.push({
-        user_id:         currentUser.id,
-        folder_local_id: folderId,
-        word_key:        wordKey,
-        box:             1,
-        next_due:        today,
-        archived:        false,
-        created_at:      new Date().toISOString(),
-        updated_at:      new Date().toISOString(),
-      });
+      rows.push({ word_key: wordKey, box: 1, next_due: today, archived: false });
     });
   }
 
-  await memoBulkInsert(folderId, rows);
+  // Save to local cache immediately (synchronous — makes session start instant)
+  const cacheMap = {};
+  rows.forEach(r => { cacheMap[r.word_key] = { box: r.box, next_due: r.next_due, archived: r.archived }; });
+  memoCardsCache_save(folderId, cacheMap);
+
+  // Persist to DB in background
+  if (sb && currentUser) {
+    const dbRows = rows.map(r => ({
+      user_id: currentUser.id, folder_local_id: folderId,
+      word_key: r.word_key, box: r.box, next_due: r.next_due, archived: r.archived,
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    }));
+    memoBulkInsert(folderId, dbRows);
+  }
 }
 
 // ── SESSION BUILD ─────────────────────────────────────────────────
@@ -476,7 +548,7 @@ async function memoCheck() {
       // Box 5 correct → archived
       memoCards[item.wordKey] = { box: 5, next_due: memoAddDays(30), archived: true };
       memoResult.archived++;
-      await memoUpsertCard(memoFolderId, item.wordKey, 5, memoAddDays(30), true);
+      memoUpsertCard(memoFolderId, item.wordKey, 5, memoAddDays(30), true);
       fb.innerHTML = `
         <div class="memo-fb-correct">
           <div class="memo-fb-correct-top"><span class="memo-fb-icon">★</span><span>Learned! Word archived.</span></div>
@@ -486,7 +558,7 @@ async function memoCheck() {
       const newBox  = card.box + 1;
       const nextDue = memoAddDays(MEMO_BOX_DAYS[newBox]);
       memoCards[item.wordKey] = { box: newBox, next_due: nextDue, archived: false };
-      await memoUpsertCard(memoFolderId, item.wordKey, newBox, nextDue, false);
+      memoUpsertCard(memoFolderId, item.wordKey, newBox, nextDue, false);
       fb.innerHTML = `
         <div class="memo-fb-correct">
           <div class="memo-fb-correct-top"><span class="memo-fb-icon">✓</span><span>Box ${card.box} → Box ${newBox}</span></div>
@@ -498,7 +570,7 @@ async function memoCheck() {
     memoResult.resetCount++;
     const nextDue = memoAddDays(MEMO_BOX_DAYS[1]);
     memoCards[item.wordKey] = { box: 1, next_due: nextDue, archived: false };
-    await memoUpsertCard(memoFolderId, item.wordKey, 1, nextDue, false);
+    memoUpsertCard(memoFolderId, item.wordKey, 1, nextDue, false);
 
     const answerHtml = dir === 'en-ko'
       ? hl(w.sadong, w.suffix)

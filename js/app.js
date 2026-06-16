@@ -605,7 +605,10 @@ function closeTransferModal() {
 function executeTransfer() {
   if (!_transferTargetFolderId || !_transferSelectedIds.size) return;
   customSets.forEach(s => {
-    if (_transferSelectedIds.has(s.id)) s.folderId = _transferTargetFolderId;
+    if (_transferSelectedIds.has(s.id)) {
+      s.folderId = _transferTargetFolderId;
+      if (typeof cloudUpsertSet === 'function') cloudUpsertSet(s);
+    }
   });
   saveCustomSets();
   const dest = _transferTargetFolderId;

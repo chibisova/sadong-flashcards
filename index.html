@@ -285,7 +285,7 @@
 <div class="page" id="pageMemo">
   <div class="pg-header">
     <div class="pg-header-top">
-      <button class="icon-btn" onclick="memoBackToFolder()">← Back</button>
+      <button class="icon-btn" onclick="memoRequestLeave()">← End session</button>
       <div style="display:flex;gap:8px">
         <button class="icon-btn" onclick="openMemoMidSettings()" title="Settings">⚙</button>
         <button class="icon-btn" id="memoThemeBtn" onclick="toggleTheme()">☀️</button>
@@ -317,6 +317,14 @@
 <!-- ══════════════ MEMO RESULTS PAGE ══════════════ -->
 <div class="page" id="pageMemoResults">
   <div class="memo-results-wrap" id="memoResultsContent"></div>
+</div>
+
+<!-- ══════════════ MEMO LOADING OVERLAY ══════════════ -->
+<div class="pi-overlay hidden" id="memoLoadingOverlay" style="pointer-events:all">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+    <div class="pi-spin-ring"></div>
+    <div class="pi-spin-lbl">Loading…</div>
+  </div>
 </div>
 
 <!-- ══════════════ MEMO SETUP MODAL ══════════════ -->
@@ -363,6 +371,20 @@
       <p style="font-size:14px;color:var(--ink-dim);line-height:1.6;margin:0 0 20px">Current session progress will be lost. Continue with new settings?</p>
       <button class="pi-btn" onclick="memoConfirmResetSession()">Yes, restart</button>
       <button class="pi-btn-ghost" onclick="memoHideSettingsWarning()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MEMO LEAVE CONFIRM ══════════════ -->
+<div class="pi-overlay hidden" id="memoLeaveConfirmOverlay">
+  <div class="pi-modal" style="max-width:320px">
+    <div class="pi-modal-header">
+      <div class="pi-modal-title">Leave session?</div>
+    </div>
+    <div class="pi-body">
+      <p style="font-size:14px;color:var(--ink-dim);line-height:1.6;margin:0 0 20px">The remaining cards in this session will be lost.</p>
+      <button class="pi-btn" onclick="memoLeaveConfirmYes()">Leave</button>
+      <button class="pi-btn-ghost" onclick="memoLeaveConfirmNo()">Keep going</button>
     </div>
   </div>
 </div>
