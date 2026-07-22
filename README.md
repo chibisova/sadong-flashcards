@@ -2,6 +2,9 @@
 
 > A Korean vocabulary trainer with spaced repetition.
 
+![Falshcards.gif](Flashcards.gif)
+
+
 ---
 
 ## Features
