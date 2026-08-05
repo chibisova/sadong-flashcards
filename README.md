@@ -120,6 +120,26 @@ Memo mode and cloud sync require a [Supabase](https://supabase.com) project. Wit
 
 ---
 
+## Dev mode
+
+Lets you use signed-in-only features (memo mode, cloud-sync UI) without a real Supabase login — useful when the Supabase project is unreachable/paused. Uses a fake local `currentUser`; no real credentials involved. Only activates on `localhost`, never on a deployed build.
+
+```
+cd sadong-flashcards
+python3 -m http.server 8000
+open http://localhost:8000
+```
+
+In the browser console:
+```js
+localStorage.setItem('kf_dev_mode', '1')   // enable, then reload
+localStorage.removeItem('kf_dev_mode')     // disable, then reload
+```
+
+`config.js` still needs to exist (copy from `config.example.js`) so the page loads without a JS error — the values inside it don't matter for dev mode.
+
+---
+
 ## File structure
 
 ```
@@ -137,12 +157,13 @@ sadong-flashcards/
     ├── config.js           # Supabase URL + anon key (git-ignored; copy from config.example.js)
     ├── auth.js             # Supabase auth, sign-in modal, cloud sync for sets + folders
     ├── memo.js             # Leitner memo mode (session logic, Supabase sync)
-    └── app.js              # menu rendering, theme toggle, folder navigation, boot
+    ├── app.js              # menu rendering, theme toggle, folder navigation, boot
+    └── dev.js              # dev mode: fake signed-in session for local debugging (localhost only)
 ```
 
 Plain script tags, no bundler, no ES modules — all variables and functions are global.
 
-Script load order: `data.js → sets.js → study.js → test.js → import.js → config.js → auth.js → memo.js → app.js`
+Script load order: `data.js → sets.js → study.js → test.js → import.js → config.js → auth.js → memo.js → app.js → dev.js`
 
 ---
 
