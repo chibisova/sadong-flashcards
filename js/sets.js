@@ -35,7 +35,7 @@ function saveFolders() {
 }
 
 function getAllFolders() {
-  return [{ id: 'starter', name: 'Starter' }, ...customFolders];
+  return [{ id: 'starter', name: 'Starter' }, ...PERMANENT_FOLDERS, ...customFolders];
 }
 
 function createFolder(name) {
@@ -143,15 +143,17 @@ function rawToEngineWord(r) {
 }
 
 function getAllSets() {
-  const custom = customSets.map(cs => ({
+  const toEngineSet = cs => ({
     ...cs,
     isBuiltIn:   false,
     promptLabel: 'Type the word',
     frontLabel:  "What's the Korean?",
     pageLabel:   cs.title,
     words:       (cs.rawWords || []).map(rawToEngineWord),
-  }));
-  return [...BUILT_IN_SETS, ...custom];
+  });
+  const custom    = customSets.map(toEngineSet);
+  const permanent = PERMANENT_SETS.map(toEngineSet);
+  return [...BUILT_IN_SETS, ...permanent, ...custom];
 }
 
 // ═══════════════════════════════════════════════════════════════

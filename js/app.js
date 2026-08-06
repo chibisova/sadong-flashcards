@@ -20,6 +20,7 @@ function debounce(fn, ms) {
 }
 
 function showPage(name) {
+  if (name !== 'webtoon') closeWebtoonTranscript();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const pg = document.getElementById('page' + name[0].toUpperCase() + name.slice(1));
@@ -86,7 +87,7 @@ function createSetCard(set) {
   } catch {}
   const avgPct = Math.round((swipePct + typePct) / 2);
 
-  const editBtn = set.isBuiltIn ? '' :
+  const editBtn = (set.isBuiltIn || set.isPermanent) ? '' :
     `<button class="set-edit-btn" onclick="event.stopPropagation();openEditSet('${set.id}')">✏️ Edit</button>`;
   const exportBtn =
     `<button class="set-edit-btn" onclick="event.stopPropagation();exportSet('${set.id}')">↓ Export</button>`;
@@ -114,7 +115,7 @@ function createFolderCard(folder, name, count) {
   const isBuiltin = folder === null;
   const folderId  = folder ? folder.id : 'builtin';
   const emoji     = isBuiltin ? '📦' : (folder.id === 'starter' ? '🗂️' : '📁');
-  const canManage = !isBuiltin && folder.id !== 'starter';
+  const canManage = !isBuiltin && folder.id !== 'starter' && !folder.isPermanent;
 
   const card = document.createElement('div');
   card.className = 'folder-card';
@@ -242,7 +243,7 @@ function openFolderContents(folderId) {
   const folder     = isBuiltin ? null : getAllFolders().find(f => f.id === folderId);
   const folderName = isBuiltin ? 'Built-in' : (folder ? folder.name : 'Starter');
 
-  const isUserFolder = !isBuiltin && folderId !== 'starter';
+  const isUserFolder = !isBuiltin && folderId !== 'starter' && !folder?.isPermanent;
   const showShareBtn = isUserFolder && userIsSignedIn();
 
   document.getElementById('folderBackBtn').style.display = '';
@@ -617,6 +618,7 @@ function executeTransfer() {
 }
 
 function showMenu() {
+  closeWebtoonTranscript();
   document.getElementById('mainNav').style.display = 'none';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pg = document.getElementById('pageMenu');
@@ -641,6 +643,7 @@ function selectSet(id) {
   document.getElementById('t-prompt-lbl').textContent = set.promptLabel;
 
   document.getElementById('mainNav').style.display = '';
+  document.getElementById('navWebtoon').style.display = set.webtoonId ? '' : 'none';
 
   S.busy = false; S.isFlipped = false; S.wrap = null; S.current = null;
   document.getElementById('s-done').classList.remove('show');

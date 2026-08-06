@@ -149,7 +149,7 @@ sadong-flashcards/
 ├── css/
 │   └── style.css           # all styles (themes, components, animations)
 └── js/
-    ├── data.js             # built-in word sets (BUILT_IN_SETS)
+    ├── data.js             # built-in word sets (BUILT_IN_SETS) + permanent folders/sets shipped with the app (PERMANENT_FOLDERS, PERMANENT_SETS)
     ├── sets.js             # custom set + folder CRUD, word rows, JSON import/export, NIKL lookup
     ├── study.js            # swipe engine, type engine, progress tracking, session state
     ├── test.js             # test mode (match, true/false, type questions + results)
@@ -157,13 +157,22 @@ sadong-flashcards/
     ├── config.js           # Supabase URL + anon key (git-ignored; copy from config.example.js)
     ├── auth.js             # Supabase auth, sign-in modal, cloud sync for sets + folders
     ├── memo.js             # Leitner memo mode (session logic, Supabase sync)
+    ├── webtoon.js          # Webtoon mode: static story viewer, shown as a tab on sets with a matching story
     ├── app.js              # menu rendering, theme toggle, folder navigation, boot
     └── dev.js              # dev mode: fake signed-in session for local debugging (localhost only)
 ```
 
 Plain script tags, no bundler, no ES modules — all variables and functions are global.
 
-Script load order: `data.js → sets.js → study.js → test.js → import.js → config.js → auth.js → memo.js → app.js → dev.js`
+Script load order: `data.js → sets.js → study.js → test.js → import.js → config.js → auth.js → memo.js → webtoon.js → app.js → dev.js`
+
+### Permanent folders/sets vs. custom folders/sets
+
+Regular folders/sets a user creates live in `localStorage` (`kf_folders` / `kf_custom_sets`) and sync to Supabase when signed in. **Permanent** folders/sets (`PERMANENT_FOLDERS` / `PERMANENT_SETS` in `data.js`) ship with the app instead — same shape as a custom set/folder, but always present regardless of browser or login state, and not editable/deletable from the UI (`isPermanent: true` gates the edit/delete/share buttons in `app.js`). Used for content that should be the same for every user, e.g. `TOPIK30 / TOPIK Day 9`, which also carries a `webtoonId` linking it to a story in `webtoon.js`.
+
+### Webtoon mode
+
+A set's practice page (`js/app.js` `selectSet()`) shows a **🎨 Webtoon** tab alongside Swipe/Type/Test/Progress only when that set has a `webtoonId`. The story data (`WEBTOON_STORIES` in `js/webtoon.js`) is a static viewer for now — panel images plus a Korean/English transcript sheet (tap a line to reveal the translation). This is Phase 1 of a planned pipeline: an in-app "Generate webtoon" button that turns a set's words into a short illustrated story via LLM + image-gen (BYOK, same pattern as the photo-import feature), storing panels in Supabase once cloud storage is available. The data shape here (`images[]`, `panels[].korean/english/words`) is designed to match what that generator would also need to produce.
 
 ---
 
